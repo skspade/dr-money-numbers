@@ -1,52 +1,119 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react';
+import { BudgetAllocation, BudgetState, BudgetGuard } from '../lib/types/budget';
 
-interface BudgetCategory {
-  id: string
-  name: string
-  limit: number
-  spent: number
-  period: 'monthly' | 'yearly'
-  rollover: boolean
-}
+type BudgetAction = 
+  | { type: 'SET_INCOME'; amount: number }
+  | { type: 'SET_SAVINGS'; amount: number }
+  | { type: 'ADD_ALLOCATION'; allocation: BudgetAllocation }
+  | { type: 'UPDATE_ALLOCATION'; allocation: BudgetAllocation }
+  | { type: 'UPDATE_SPENDING'; categoryId: string; amount: number };
 
-interface UseBudgetReturn {
-  categories: BudgetCategory[]
-  isLoading: boolean
-  error: Error | null
-  addCategory: (category: Omit<BudgetCategory, 'id' | 'spent'>) => Promise<void>
-  updateCategory: (id: string, updates: Partial<BudgetCategory>) => Promise<void>
-  deleteCategory: (id: string) => Promise<void>
-  resetSpending: (categoryId: string) => Promise<void>
-}
+export const useBudget = (initialState?: Partial<BudgetState>) => {
+  const [state, setState] = useState<BudgetState>(() => ({
+    totalIncome: initialState?.totalIncome ?? 0,
+    targetSavings: initialState?.targetSavings ?? 0,
+    allocations: initialState?.allocations ?? [],
+    unallocated: initialState?.totalIncome ?? 0,
+  }));
 
-export function useBudget(): UseBudgetReturn {
-  const [categories, setCategories] = useState<BudgetCategory[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
+  const budgetGuard = useMemo(() => {
+    return new BudgetGuard(
+      state.totalIncome,
+      state.targetSavings,
+      state.allocations
+    );
+  }, [state.totalIncome, state.targetSavings, state.allocations]);
 
-  const addCategory = useCallback(async (category: Omit<BudgetCategory, 'id' | 'spent'>) => {
-    // Implementation will go here
-  }, [])
+  const dispatch = useCallback((action: BudgetAction) => {
+    setState((currentState) => {
+      switch (action.type) {
+        case 'SET_INCOME': {
+          const newIncome = Math.max(0, action.amount);
+          return {
+            ...currentState,
+            totalIncome: newIncome,
+            unallocated: newIncome - BudgetGuard.getTotalAllocated(currentState.allocations),
+          };
+        }
 
-  const updateCategory = useCallback(async (id: string, updates: Partial<BudgetCategory>) => {
-    // Implementation will go here
-  }, [])
+        case 'SET_SAVINGS': {
+          const newSavings = Math.max(0, action.amount);
+          if (newSavings > currentState.totalIncome) {
+            return currentState;
+          }
+          return {
+            ...currentState,
+            targetSavings: newSavings,
+            unallocated: currentState.totalIncome - newSavings - 
+              BudgetGuard.getTotalAllocated(currentState.allocations),
+          };
+        }
 
-  const deleteCategory = useCallback(async (id: string) => {
-    // Implementation will go here
-  }, [])
+        case 'ADD_ALLOCATION': {
+          const validation = budgetGuard.validateAllocation(action.allocation);
+          if (!validation.valid) {
+            console.error(validation.message);
+            return currentState;
+          }
 
-  const resetSpending = useCallback(async (categoryId: string) => {
-    // Implementation will go here
-  }, [])
+          const newAllocations = [...currentState.allocations, action.allocation];
+          return {
+            ...currentState,
+            allocations: newAllocations,
+            unallocated: currentState.totalIncome - currentState.targetSavings - 
+              BudgetGuard.getTotalAllocated(newAllocations),
+          };
+        }
+
+        case 'UPDATE_ALLOCATION': {
+          const validation = budgetGuard.validateAllocation(action.allocation);
+          if (!validation.valid) {
+            console.error(validation.message);
+            return currentState;
+          }
+
+          const newAllocations = currentState.allocations.map((a) =>
+            a.id === action.allocation.id ? action.allocation : a
+          );
+
+          return {
+            ...currentState,
+            allocations: newAllocations,
+            unallocated: currentState.totalIncome - currentState.targetSavings - 
+              BudgetGuard.getTotalAllocated(newAllocations),
+          };
+        }
+
+        case 'UPDATE_SPENDING': {
+          const newAllocations = currentState.allocations.map((allocation) => {
+            if (allocation.id === action.categoryId) {
+              const spent = Math.max(0, action.amount);
+              return {
+                ...allocation,
+                spent,
+                available: allocation.allocated - spent,
+              };
+            }
+            return allocation;
+          });
+
+          return {
+            ...currentState,
+            allocations: newAllocations,
+          };
+        }
+
+        default:
+          return currentState;
+      }
+    });
+  }, [budgetGuard]);
 
   return {
-    categories,
-    isLoading,
-    error,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-    resetSpending
-  }
-}
+    state,
+    dispatch,
+    availableFunds: budgetGuard.availableFunds,
+    isAllocationValid: (allocation: BudgetAllocation) => 
+      budgetGuard.validateAllocation(allocation).valid,
+  };
+};
