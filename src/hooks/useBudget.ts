@@ -1,5 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { BudgetAllocation, BudgetState, BudgetGuard } from '../lib/types/budget';
+import { auth } from '@/lib/auth';
 
 type BudgetAction = 
   | { type: 'SET_INCOME'; amount: number }
@@ -10,6 +11,7 @@ type BudgetAction =
 
 export const useBudget = (initialState?: Partial<BudgetState>) => {
   const [state, setState] = useState<BudgetState>(() => ({
+    userId: '',  // This will be set after auth check
     totalIncome: initialState?.totalIncome ?? 0,
     targetSavings: initialState?.targetSavings ?? 0,
     allocations: initialState?.allocations ?? [],
@@ -23,6 +25,17 @@ export const useBudget = (initialState?: Partial<BudgetState>) => {
       state.allocations
     );
   }, [state.totalIncome, state.targetSavings, state.allocations]);
+
+  // Update userId when auth is ready
+  useEffect(() => {
+    const updateUserId = async () => {
+      const session = await auth();
+      if (session?.user?.id) {
+        setState(prev => ({ ...prev, userId: session.user.id }));
+      }
+    };
+    updateUserId();
+  }, []);
 
   const dispatch = useCallback((action: BudgetAction) => {
     setState((currentState) => {

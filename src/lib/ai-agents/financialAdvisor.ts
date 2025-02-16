@@ -12,6 +12,15 @@ interface BudgetSuggestion {
   };
 }
 
+interface FinancialAdvice {
+  category: string;
+  title: string;
+  description: string;
+  steps: string[];
+  priority: 'high' | 'medium' | 'low';
+  potentialImpact: number;
+}
+
 export interface FinancialContext {
   budget: BudgetState;
   monthlyIncome: number;
@@ -27,15 +36,6 @@ export interface FinancialContext {
     deadline: string;
     priority: number;
   }[];
-}
-
-interface FinancialAdvice {
-  category: 'budget' | 'saving' | 'investment' | 'debt';
-  title: string;
-  description: string;
-  steps: string[];
-  priority: 'high' | 'medium' | 'low';
-  potentialImpact: number;
 }
 
 export class FinancialAdvisor {
@@ -59,7 +59,45 @@ export class FinancialAdvisor {
       });
     }
 
-    // Additional advice based on spending patterns and goals
+    // Check for high spending categories
+    const highSpendingCategories = context.budget.allocations
+      .filter(a => a.spent / a.allocated > 0.9)
+      .map(a => ({
+        category: a.category,
+        overspend: a.spent - a.allocated
+      }));
+
+    if (highSpendingCategories.length > 0) {
+      advice.push({
+        category: 'spending',
+        title: 'High Spending Alert',
+        description: `You're close to or exceeding your budget in ${highSpendingCategories.length} categories.`,
+        steps: highSpendingCategories.map(c => 
+          `Review ${c.category} spending (${c.overspend > 0 ? 'overspent by' : 'remaining'} $${Math.abs(c.overspend).toFixed(2)})`
+        ),
+        priority: 'high',
+        potentialImpact: highSpendingCategories.reduce((sum, c) => sum + c.overspend, 0) / context.monthlyIncome
+      });
+    }
+
+    // Check savings rate
+    const savingsRate = context.monthlySavings / context.monthlyIncome;
+    if (savingsRate < 0.2) {
+      advice.push({
+        category: 'savings',
+        title: 'Increase Savings',
+        description: `Your current savings rate is ${(savingsRate * 100).toFixed(1)}%. Consider aiming for at least 20%.`,
+        steps: [
+          'Review discretionary spending categories',
+          'Look for opportunities to increase income',
+          'Consider automating savings transfers',
+          'Review and optimize fixed expenses'
+        ],
+        priority: 'medium',
+        potentialImpact: (0.2 - savingsRate) * context.monthlyIncome
+      });
+    }
+
     return advice;
   }
 
@@ -111,7 +149,7 @@ export class FinancialAdvisor {
             longTerm: "More accurate budgeting and better financial planning"
           }
         });
-      } else if (spendingRatio < 0.5 && allocation.target?.type !== 'monthly') {
+      } else if (spendingRatio < 0.5) {
         suggestions.push({
           category: allocation.category,
           currentAllocation: allocation.allocated,

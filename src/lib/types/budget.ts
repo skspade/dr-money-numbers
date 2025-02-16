@@ -1,6 +1,9 @@
 export interface BudgetAllocation {
   id: string;
+  userId: string;
   category: string;
+  amount: number;
+  frequency: 'WEEKLY' | 'MONTHLY' | 'ANNUAL';
   allocated: number;
   target?: {
     type: 'weekly' | 'monthly';
@@ -11,6 +14,7 @@ export interface BudgetAllocation {
 }
 
 export interface BudgetState {
+  userId: string;
   totalIncome: number;
   targetSavings: number;
   allocations: BudgetAllocation[];
@@ -31,6 +35,10 @@ export class BudgetGuard {
 
   get availableFunds(): number {
     return this._availableFunds;
+  }
+
+  static getTotalAllocated(allocations: BudgetAllocation[]): number {
+    return allocations.reduce((sum, a) => sum + a.allocated, 0);
   }
 
   canAllocate(amount: number): boolean {
@@ -56,9 +64,5 @@ export class BudgetGuard {
     }
 
     return { valid: true };
-  }
-
-  static getTotalAllocated(allocations: BudgetAllocation[]): number {
-    return allocations.reduce((sum, a) => sum + a.allocated, 0);
   }
 }
