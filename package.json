@@ -11,7 +11,8 @@
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate:pg",
     "db:setup": "./setup-postgres.sh",
-    "db:cleanup": "./cleanup-postgres.sh"
+    "db:cleanup": "./cleanup-postgres.sh",
+    "db:stop": "brew services stop postgresql@16"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.1.10",
