@@ -1,6 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { signIn } from "next-auth/react";
+import { SignInButton } from "@/components/auth/SignInButton";
 
 export default function SignIn() {
   return (
@@ -11,12 +10,7 @@ export default function SignIn() {
           <CardDescription>Sign in to manage your budget</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
-            className="w-full"
-          >
-            Sign in with GitHub
-          </Button>
+          <SignInButton />
         </CardContent>
       </Card>
     </div>

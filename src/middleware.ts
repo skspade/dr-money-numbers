@@ -1,27 +1,24 @@
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import type { Session } from "next-auth";
+import { getToken } from "next-auth/jwt";
 
-interface AuthenticatedRequest extends NextRequest {
-  auth: Session | null;
-}
-
-export default auth((req: AuthenticatedRequest) => {
-  const isLoggedIn = !!req.auth;
-  const isAuthPage = req.nextUrl.pathname.startsWith("/auth");
+export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request });
+  const isLoggedIn = !!token;
+  const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
 
   if (isAuthPage) {
     if (isLoggedIn) {
-      return Response.redirect(new URL("/dashboard", req.nextUrl));
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     return null;
   }
 
   if (!isLoggedIn) {
-    return Response.redirect(new URL("/auth/signin", req.nextUrl));
+    return NextResponse.redirect(new URL("/auth/signin", request.url));
   }
   return null;
-});
+}
 
 // Optionally, don't invoke Middleware on some paths
 export const config = {
