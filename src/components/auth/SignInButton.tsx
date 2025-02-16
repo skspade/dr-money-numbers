@@ -10,20 +10,11 @@ export function SignInButton() {
   const router = useRouter();
 
   const handleSignIn = async () => {
-    console.log("Signing in...");
     try {
       setIsLoading(true);
-      const result = await signIn("github", {
-        callbackUrl: "/dashboard",
-        redirect: false,
+      await signIn("github", {
+        callbackUrl: `${window.location.origin}/dashboard`,
       });
-      
-      if (result?.error) {
-        console.error("Sign in error:", result.error);
-        router.push("/auth/error");
-      } else if (result?.url) {
-        router.push(result.url);
-      }
     } catch (error) {
       console.error("Sign in error:", error);
       router.push("/auth/error");

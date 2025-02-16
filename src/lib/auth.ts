@@ -10,6 +10,11 @@ export const authOptions: AuthOptions = {
     GitHub({
       clientId: process.env.GITHUB_ID!,
       clientSecret: process.env.GITHUB_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+        },
+      },
     }),
   ],
   debug: process.env.NODE_ENV === "development",
@@ -29,12 +34,13 @@ export const authOptions: AuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) {
-        return `${baseUrl}${url}`;
-      }
-      else if (new URL(url).origin === baseUrl) {
-        return url;
-      }
+      // If the url is absolute and starts with the base url
+      if (url.startsWith(baseUrl)) return url;
+      // If the url is relative (starts with /)
+      if (url.startsWith("/")) return new URL(url, baseUrl).toString();
+      // If the url is for the dashboard
+      if (url.includes("/dashboard")) return new URL("/dashboard", baseUrl).toString();
+      // Default fallback
       return baseUrl;
     },
   },
