@@ -13,7 +13,8 @@
     "db:setup": "./setup-postgres.sh",
     "db:cleanup": "./cleanup-postgres.sh",
     "db:stop": "brew services stop postgresql@16",
-    "db:start": "brew services start postgresql@16"
+    "db:start": "brew services start postgresql@16",
+    "add:shadcn": "pnpm dlx shadcn@latest add"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.1.10",
