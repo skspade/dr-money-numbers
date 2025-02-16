@@ -82,6 +82,8 @@ export function MonthlyPlanner() {
   };
 
   const updateSuggestions = async () => {
+    if (!state.userId) return; // Don't update suggestions if user is not authenticated
+
     setIsLoading(true);
     setError(null);
 
@@ -120,8 +122,9 @@ export function MonthlyPlanner() {
     }
   }, [state.totalIncome, state.targetSavings, state.allocations, state.userId]);
 
-  const progress = (state.totalIncome - state.unallocated) / state.totalIncome * 100;
+  const progress = state.totalIncome > 0 ? ((state.totalIncome - state.unallocated) / state.totalIncome * 100) : 0;
 
+  // Show loading state while waiting for auth
   if (!state.userId) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
