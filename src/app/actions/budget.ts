@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { categories } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { BudgetAllocation } from "@/lib/types/budget";
@@ -11,6 +11,8 @@ export async function saveBudgetAllocation(allocation: Omit<BudgetAllocation, "i
   if (!session?.user?.id) {
     throw new Error("Not authenticated");
   }
+
+  const db = await getDb();
 
   // First, check if a category with this name already exists for the user
   const existingCategories = await db

@@ -20,10 +20,14 @@ const DEFAULT_CATEGORIES = [
   "Healthcare",
   "Entertainment",
   "Savings",
-];
+] as const;
 
-export function MonthlyPlanner() {
-  const { state, dispatch } = useBudget();
+interface MonthlyPlannerProps {
+  userId: string;
+}
+
+export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
+  const { state, dispatch } = useBudget({ userId });
   const [selectedCategory, setSelectedCategory] = useState("");
   const [allocationAmount, setAllocationAmount] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -82,7 +86,7 @@ export function MonthlyPlanner() {
   };
 
   const updateSuggestions = async () => {
-    if (!state.userId) return; // Don't update suggestions if user is not authenticated
+    if (!state.userId) return;
 
     setIsLoading(true);
     setError(null);
@@ -124,7 +128,6 @@ export function MonthlyPlanner() {
 
   const progress = state.totalIncome > 0 ? ((state.totalIncome - state.unallocated) / state.totalIncome * 100) : 0;
 
-  // Show loading state while waiting for auth
   if (!state.userId) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -216,12 +219,12 @@ export function MonthlyPlanner() {
           </div>
 
           {state.allocations.length > 0 && (
-            <div className="space-y-2">
+            <div key="allocations" className="space-y-2">
               <Label>Current Allocations</Label>
               <div className="space-y-2">
                 {state.allocations.map((allocation) => (
                   <div
-                    key={allocation.id}
+                    key={`allocation-${allocation.id}`}
                     className="flex justify-between items-center p-2 bg-muted rounded"
                   >
                     <span>{allocation.category}</span>
@@ -233,11 +236,11 @@ export function MonthlyPlanner() {
           )}
 
           {suggestions.length > 0 && (
-            <div className="space-y-2">
+            <div key="suggestions" className="space-y-2">
               <Label>AI Suggestions</Label>
               <div className="space-y-1">
                 {suggestions.map((suggestion, index) => (
-                  <p key={index} className="text-sm text-muted-foreground">
+                  <p key={`suggestion-${index}`} className="text-sm text-muted-foreground">
                     {suggestion}
                   </p>
                 ))}

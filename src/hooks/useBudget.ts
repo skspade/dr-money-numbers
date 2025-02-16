@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { BudgetAllocation, BudgetState, BudgetGuard } from '../lib/types/budget';
-import { auth } from '@/lib/auth';
+import { useSession } from 'next-auth/react';
 
 type BudgetAction = 
   | { type: 'SET_INCOME'; amount: number }
@@ -9,9 +9,14 @@ type BudgetAction =
   | { type: 'UPDATE_ALLOCATION'; allocation: BudgetAllocation }
   | { type: 'UPDATE_SPENDING'; categoryId: string; amount: number };
 
-export const useBudget = (initialState?: Partial<BudgetState>) => {
+interface BudgetInitialState extends Partial<BudgetState> {
+  userId?: string;
+}
+
+export const useBudget = (initialState?: BudgetInitialState) => {
+  const { data: session } = useSession();
   const [state, setState] = useState<BudgetState>(() => ({
-    userId: '',  // This will be set after auth check
+    userId: initialState?.userId ?? session?.user?.id ?? '',
     totalIncome: initialState?.totalIncome ?? 0,
     targetSavings: initialState?.targetSavings ?? 0,
     allocations: initialState?.allocations ?? [],
@@ -26,16 +31,13 @@ export const useBudget = (initialState?: Partial<BudgetState>) => {
     );
   }, [state.totalIncome, state.targetSavings, state.allocations]);
 
-  // Update userId when auth is ready
+  // Update userId when session changes or when provided via props
   useEffect(() => {
-    const updateUserId = async () => {
-      const session = await auth();
-      if (session?.user?.id) {
-        setState(prev => ({ ...prev, userId: session.user.id }));
-      }
-    };
-    updateUserId();
-  }, []);
+    const newUserId = initialState?.userId ?? session?.user?.id;
+    if (newUserId && newUserId !== state.userId) {
+      setState(prev => ({ ...prev, userId: newUserId }));
+    }
+  }, [session, initialState?.userId]);
 
   const dispatch = useCallback((action: BudgetAction) => {
     setState((currentState) => {

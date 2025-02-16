@@ -1,11 +1,10 @@
 import NextAuth, { AuthOptions } from "next-auth";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { db } from "@/db";
 import GitHub from "next-auth/providers/github";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { getDb } from "@/db";
 
 export const authOptions: AuthOptions = {
-  adapter: DrizzleAdapter(db),
-  secret: process.env.NEXTAUTH_SECRET,
+  adapter: DrizzleAdapter(await getDb()),
   providers: [
     GitHub({
       clientId: process.env.GITHUB_ID!,
@@ -17,33 +16,49 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
-  debug: process.env.NODE_ENV === "development",
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
-  },
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production" ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      }
+    }
+  },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+        token.email = user.email;
+      }
+      return token;
+    },
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+      if (session.user) {
+        session.user.id = token.sub as string;
+        session.user.email = token.email as string;
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // If the url is absolute and starts with the base url
-      if (url.startsWith(baseUrl)) return url;
-      // If the url is relative (starts with /)
-      if (url.startsWith("/")) return new URL(url, baseUrl).toString();
-      // If the url is for the dashboard
-      if (url.includes("/dashboard")) return new URL("/dashboard", baseUrl).toString();
-      // Default fallback
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
   },
+  pages: {
+    signIn: "/auth/signin",
+    error: "/auth/error",
+  },
+  debug: process.env.NODE_ENV === "development",
 };
 
 export const { auth, signIn, signOut } = NextAuth(authOptions); 

@@ -1,9 +1,21 @@
-import { authOptions } from "@/lib/auth";
+import { getDb } from "@/db";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import NextAuth from "next-auth";
+import GithubProvider from "next-auth/providers/github";
 
-const handler = NextAuth(authOptions);
+const handler = NextAuth({
+    adapter: DrizzleAdapter(await getDb()),
+    session: { strategy: "jwt" },
+    providers: [
+      GithubProvider({
+        clientId: process.env.GITHUB_ID!,
+        clientSecret: process.env.GITHUB_SECRET!,
+      }),
+    ],
+    pages: {
+      signIn: '/auth/signin',
+      error: '/auth/error',
+    },
+})
 
-export const GET = handler;
-export const POST = handler;
-export const HEAD = handler;
-export const OPTIONS = handler; 
+export { handler as GET, handler as POST, handler as HEAD, handler as OPTIONS }; 

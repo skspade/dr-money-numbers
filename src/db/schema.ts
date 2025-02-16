@@ -1,49 +1,93 @@
-import { pgTable, text, timestamp, real, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, primaryKey, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
-// Create enum for target frequency
+// Enums
 export const targetFrequencyEnum = pgEnum('target_frequency', ['WEEKLY', 'MONTHLY', 'ANNUAL']);
+export type TargetFrequency = 'WEEKLY' | 'MONTHLY' | 'ANNUAL';
 
-// User table
-export const users = pgTable('users', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+// NextAuth Tables
+export const users = pgTable("user", {
+  id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
+  name: text("name"),
+  email: text("email"),
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
+  image: text("image"),
 });
 
-// Category table
-export const categories = pgTable('categories', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id),
-  name: text('name').notNull(),
-  target: real('target').notNull(),
-  frequency: targetFrequencyEnum('frequency').notNull(),
-  available: real('available').notNull(),
+export const accounts = pgTable("account", {
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  provider: text("provider").notNull(),
+  providerAccountId: text("providerAccountId").notNull(),
+  refresh_token: text("refresh_token"),
+  access_token: text("access_token"),
+  expires_at: integer("expires_at"),
+  token_type: text("token_type"),
+  scope: text("scope"),
+  id_token: text("id_token"),
+  session_state: text("session_state"),
+}, (account) => ({
+  compoundKey: primaryKey(account.provider, account.providerAccountId),
+}));
+
+export const sessions = pgTable("session", {
+  sessionToken: text("sessionToken").notNull().primaryKey(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
 });
 
-// Transaction table
-export const transactions = pgTable('transactions', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id),
-  categoryId: text('category_id').notNull().references(() => categories.id),
-  amount: real('amount').notNull(),
-  date: timestamp('date').notNull(),
-  aiTags: text('ai_tags').array(),
+export const verificationTokens = pgTable("verificationToken", {
+  identifier: text("identifier").notNull(),
+  token: text("token").notNull(),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
+}, (vt) => ({
+  compoundKey: primaryKey(vt.identifier, vt.token),
+}));
+
+// Application Tables
+export const categories = pgTable("category", {
+  id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  target: integer("target").notNull(),
+  frequency: targetFrequencyEnum("frequency").notNull(),
+  available: integer("available").notNull(),
 });
 
-// AI Settings table
-export const aiSettings = pgTable('ai_settings', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id),
+export const transactions = pgTable("transaction", {
+  id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  categoryId: text("categoryId")
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" }),
+  amount: integer("amount").notNull(),
+  date: timestamp("date").notNull(),
+  aiTags: text("aiTags").array(),
+});
+
+export const aiSettings = pgTable("aiSetting", {
+  id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many, one }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  sessions: many(sessions),
   categories: many(categories),
   transactions: many(transactions),
-  aiPreferences: one(aiSettings, {
-    fields: [users.id],
-    references: [aiSettings.userId],
-  }),
+  aiSettings: many(aiSettings),
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
