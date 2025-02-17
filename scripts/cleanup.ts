@@ -30,7 +30,6 @@ async function main() {
       'DROP TABLE IF EXISTS "session" CASCADE;',
       'DROP TABLE IF EXISTS "verificationToken" CASCADE;',
       // Then drop the base tables
-      'DROP TABLE IF EXISTS "user" CASCADE;',
       'DROP TABLE IF EXISTS "users" CASCADE;',
       // Finally drop custom types
       'DROP TYPE IF EXISTS "target_frequency" CASCADE;'

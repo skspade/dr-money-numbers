@@ -100,4 +100,6 @@ export const auth = async () => {
   return getServerSession(authOptions);
 };
 
-export const { signIn, signOut } = NextAuth(await getAuthOptions()); 
+export const { signIn, signOut } = NextAuth(await getAuthOptions());
+
+export const authOptions = await getAuthOptions(); 

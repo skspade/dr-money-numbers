@@ -7,7 +7,7 @@ export const targetFrequencyEnum = pgEnum('target_frequency', ['WEEKLY', 'MONTHL
 export type TargetFrequency = 'WEEKLY' | 'MONTHLY' | 'ANNUAL';
 
 // NextAuth Tables
-export const users = pgTable("user", {
+export const users = pgTable("users", {
   id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
   name: text("name"),
   email: text("email").unique(),
