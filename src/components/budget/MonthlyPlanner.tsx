@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { saveBudgetAllocation, loadBudgetAllocations, saveBudgetSettings } from "@/app/actions/budget";
 import { Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 const DEFAULT_CATEGORIES = [
   "Housing",
@@ -35,31 +36,25 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const isFirstLoad = useRef(true);
+  const { status } = useSession();
 
   const advisor = useMemo(() => new FinancialAdvisor(), []);
 
   useEffect(() => {
     const loadBudget = async () => {
-      if (!isFirstLoad.current) return;
+      if (!isFirstLoad.current || status !== 'authenticated') return;
       
       try {
         const budget = await loadBudgetAllocations();
-        dispatch({ type: "RESET_ALLOCATIONS" });
         
-        // Set income and savings
-        if (budget.totalIncome > 0) {
-          dispatch({ type: "SET_INCOME", amount: budget.totalIncome });
-        }
-        if (budget.targetSavings > 0) {
-          dispatch({ type: "SET_SAVINGS", amount: budget.targetSavings });
-        }
-        
-        // Add allocations
-        budget.allocations.forEach(allocation => {
-          dispatch({
-            type: "ADD_ALLOCATION",
-            allocation,
-          });
+        // Set the entire initial state at once
+        dispatch({
+          type: "SET_INITIAL_STATE",
+          state: {
+            totalIncome: budget.totalIncome,
+            targetSavings: budget.targetSavings,
+            allocations: budget.allocations,
+          },
         });
         
         isFirstLoad.current = false;
@@ -74,16 +69,20 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
     if (userId) {
       loadBudget();
     }
-  }, [userId, dispatch]);
+  }, [userId, dispatch, status]);
 
   const handleIncomeChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const newIncome = parseFloat(e.target.value) || 0;
-    dispatch({ type: "SET_INCOME", amount: newIncome });
+    
     try {
+      // Save to database first
       await saveBudgetSettings({
         monthlyIncome: newIncome,
         targetSavings: state.targetSavings,
       });
+      
+      // Only update local state if save was successful
+      dispatch({ type: "SET_INCOME", amount: newIncome });
     } catch (error) {
       console.error("Failed to save income:", error);
       setError("Failed to save income. Your changes may not persist.");
@@ -92,12 +91,16 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
 
   const handleSavingsChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const newSavings = parseFloat(e.target.value) || 0;
-    dispatch({ type: "SET_SAVINGS", amount: newSavings });
+    
     try {
+      // Save to database first
       await saveBudgetSettings({
         monthlyIncome: state.totalIncome,
         targetSavings: newSavings,
       });
+      
+      // Only update local state if save was successful
+      dispatch({ type: "SET_SAVINGS", amount: newSavings });
     } catch (error) {
       console.error("Failed to save savings target:", error);
       setError("Failed to save savings target. Your changes may not persist.");
