@@ -1,10 +1,18 @@
 import type { Config } from 'drizzle-kit';
+import { config } from 'dotenv';
+
+config();
+
+if (!process.env.POSTGRES_URL) {
+  throw new Error("POSTGRES_URL is not set");
+}
 
 export default {
   schema: './src/db/schema.ts',
   out: './drizzle',
-  driver: 'pg',
+  dialect: 'postgresql',
   dbCredentials: {
-    connectionString: process.env.POSTGRES_URL!,
+    url: process.env.POSTGRES_URL,
+    ssl: false
   },
 } satisfies Config; 

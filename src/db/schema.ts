@@ -7,7 +7,7 @@ export const targetFrequencyEnum = pgEnum('target_frequency', ['WEEKLY', 'MONTHL
 export type TargetFrequency = 'WEEKLY' | 'MONTHLY' | 'ANNUAL';
 
 // NextAuth Tables
-export const users = pgTable("user", {
+export const users = pgTable("users", {
   id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
   name: text("name"),
   email: text("email"),
@@ -15,7 +15,7 @@ export const users = pgTable("user", {
   image: text("image"),
 });
 
-export const accounts = pgTable("account", {
+export const accounts = pgTable("accounts", {
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -33,7 +33,7 @@ export const accounts = pgTable("account", {
   compoundKey: primaryKey(account.provider, account.providerAccountId),
 }));
 
-export const sessions = pgTable("session", {
+export const sessions = pgTable("sessions", {
   sessionToken: text("sessionToken").notNull().primaryKey(),
   userId: text("userId")
     .notNull()
@@ -41,7 +41,7 @@ export const sessions = pgTable("session", {
   expires: timestamp("expires", { mode: "date" }).notNull(),
 });
 
-export const verificationTokens = pgTable("verificationToken", {
+export const verificationTokens = pgTable("verificationTokens", {
   identifier: text("identifier").notNull(),
   token: text("token").notNull(),
   expires: timestamp("expires", { mode: "date" }).notNull(),
@@ -88,6 +88,20 @@ export const usersRelations = relations(users, ({ many }) => ({
   categories: many(categories),
   transactions: many(transactions),
   aiSettings: many(aiSettings),
+}));
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({

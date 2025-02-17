@@ -2,6 +2,7 @@ import NextAuth, { AuthOptions } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { getDb } from "@/db";
+import { getServerSession } from "next-auth";
 
 export const authOptions: AuthOptions = {
   adapter: DrizzleAdapter(await getDb()),
@@ -61,4 +62,6 @@ export const authOptions: AuthOptions = {
   debug: process.env.NODE_ENV === "development",
 };
 
-export const { auth, signIn, signOut } = NextAuth(authOptions); 
+export const auth = () => getServerSession(authOptions);
+
+export const { signIn, signOut } = NextAuth(authOptions); 
