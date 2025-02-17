@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { ArrowRight, PiggyBank, Calendar, Settings } from "lucide-react";
+import { ArrowRight, PiggyBank, Calendar, Settings, Receipt } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -30,6 +30,24 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">View your budget</span>
+              <ArrowRight className="h-5 w-5" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/transactions">
+          <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-6 w-6" />
+                Transactions
+              </CardTitle>
+              <CardDescription>
+                View and manage your transaction history
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Upload and analyze transactions</span>
               <ArrowRight className="h-5 w-5" />
             </CardContent>
           </Card>
