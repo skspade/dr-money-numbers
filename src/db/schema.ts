@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, primaryKey, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, primaryKey, pgEnum, index } from "drizzle-orm/pg-core";
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -7,15 +7,15 @@ export const targetFrequencyEnum = pgEnum('target_frequency', ['WEEKLY', 'MONTHL
 export type TargetFrequency = 'WEEKLY' | 'MONTHLY' | 'ANNUAL';
 
 // NextAuth Tables
-export const users = pgTable("users", {
+export const users = pgTable("user", {
   id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
   name: text("name"),
-  email: text("email"),
+  email: text("email").unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
 });
 
-export const accounts = pgTable("accounts", {
+export const accounts = pgTable("account", {
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -30,23 +30,26 @@ export const accounts = pgTable("accounts", {
   id_token: text("id_token"),
   session_state: text("session_state"),
 }, (account) => ({
-  compoundKey: primaryKey(account.provider, account.providerAccountId),
+  compoundKey: primaryKey({ columns: [account.provider, account.providerAccountId] }),
+  userIdIdx: index("account_userId_idx").on(account.userId)
 }));
 
-export const sessions = pgTable("sessions", {
+export const sessions = pgTable("session", {
   sessionToken: text("sessionToken").notNull().primaryKey(),
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { mode: "date" }).notNull(),
-});
+}, (session) => ({
+  userIdIdx: index("session_userId_idx").on(session.userId)
+}));
 
-export const verificationTokens = pgTable("verificationTokens", {
+export const verificationTokens = pgTable("verificationToken", {
   identifier: text("identifier").notNull(),
   token: text("token").notNull(),
   expires: timestamp("expires", { mode: "date" }).notNull(),
 }, (vt) => ({
-  compoundKey: primaryKey(vt.identifier, vt.token),
+  compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
 }));
 
 // Application Tables

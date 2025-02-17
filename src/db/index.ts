@@ -1,19 +1,13 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { drizzle as drizzleVercel } from 'drizzle-orm/vercel-postgres';
 import { Client } from 'pg';
-import { sql } from '@vercel/postgres';
 import * as schema from './schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 // Global client instance for local development
 let client: Client | null = null;
 
-// Create the database connection based on environment
+// Create the database connection
 const createDb = async () => {
-  if (process.env.VERCEL) {
-    return drizzleVercel(sql, { schema });
-  }
-
   try {
     // Create new client if it doesn't exist
     if (!client) {
@@ -32,11 +26,11 @@ const createDb = async () => {
 };
 
 // Initialize database connection
-let dbInstance: Promise<NodePgDatabase<typeof schema> | ReturnType<typeof drizzleVercel>> | null = null;
+let dbInstance: Promise<NodePgDatabase<typeof schema>> | null = null;
 
 export const getDb = async () => {
   if (!dbInstance) {
-    dbInstance = Promise.resolve(createDb());
+    dbInstance = createDb() as Promise<NodePgDatabase<typeof schema>>;
   }
   return dbInstance;
 };
