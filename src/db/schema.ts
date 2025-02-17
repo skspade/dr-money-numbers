@@ -84,6 +84,15 @@ export const aiSettings = pgTable("aiSetting", {
     .references(() => users.id, { onDelete: "cascade" }),
 });
 
+export const userBudget = pgTable("userBudget", {
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" })
+    .primaryKey(),
+  monthlyIncome: integer("monthlyIncome").notNull().default(0),
+  targetSavings: integer("targetSavings").notNull().default(0),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),

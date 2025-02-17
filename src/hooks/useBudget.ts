@@ -7,7 +7,8 @@ type BudgetAction =
   | { type: 'SET_SAVINGS'; amount: number }
   | { type: 'ADD_ALLOCATION'; allocation: BudgetAllocation }
   | { type: 'UPDATE_ALLOCATION'; allocation: BudgetAllocation }
-  | { type: 'UPDATE_SPENDING'; categoryId: string; amount: number };
+  | { type: 'UPDATE_SPENDING'; categoryId: string; amount: number }
+  | { type: 'RESET_ALLOCATIONS' };
 
 interface BudgetInitialState extends Partial<BudgetState> {
   userId?: string;
@@ -23,13 +24,18 @@ export const useBudget = (initialState?: BudgetInitialState) => {
     unallocated: initialState?.totalIncome ?? 0,
   }));
 
+  const [isInitialSetup, setIsInitialSetup] = useState(
+    !initialState?.totalIncome || initialState.totalIncome === 0
+  );
+
   const budgetGuard = useMemo(() => {
     return new BudgetGuard(
       state.totalIncome,
       state.targetSavings,
-      state.allocations
+      state.allocations,
+      isInitialSetup
     );
-  }, [state.totalIncome, state.targetSavings, state.allocations]);
+  }, [state.totalIncome, state.targetSavings, state.allocations, isInitialSetup]);
 
   // Update userId when session changes or when provided via props
   useEffect(() => {
@@ -42,8 +48,20 @@ export const useBudget = (initialState?: BudgetInitialState) => {
   const dispatch = useCallback((action: BudgetAction) => {
     setState((currentState) => {
       switch (action.type) {
+        case 'RESET_ALLOCATIONS': {
+          return {
+            ...currentState,
+            allocations: [],
+            unallocated: currentState.totalIncome,
+          };
+        }
+
         case 'SET_INCOME': {
           const newIncome = Math.max(0, action.amount);
+          // Only exit initial setup if we have a valid income
+          if (newIncome > 0) {
+            setIsInitialSetup(false);
+          }
           return {
             ...currentState,
             totalIncome: newIncome,
@@ -65,7 +83,7 @@ export const useBudget = (initialState?: BudgetInitialState) => {
         }
 
         case 'ADD_ALLOCATION': {
-          const validation = budgetGuard.validateAllocation(action.allocation);
+          const validation = budgetGuard.validateAllocation(action.allocation, true);
           if (!validation.valid) {
             console.error(validation.message);
             return currentState;
@@ -128,6 +146,7 @@ export const useBudget = (initialState?: BudgetInitialState) => {
     state,
     dispatch,
     availableFunds: budgetGuard.availableFunds,
+    isInitialSetup,
     isAllocationValid: (allocation: BudgetAllocation) => 
       budgetGuard.validateAllocation(allocation).valid,
   };

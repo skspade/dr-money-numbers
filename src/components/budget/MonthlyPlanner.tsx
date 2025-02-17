@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, ChangeEvent } from "react";
+import { useEffect, useState, useMemo, ChangeEvent, useRef } from "react";
 import { useBudget } from "@/hooks/useBudget";
 import { FinancialAdvisor, FinancialContext } from "@/lib/ai-agents/financialAdvisor";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { saveBudgetAllocation } from "@/app/actions/budget";
+import { saveBudgetAllocation, loadBudgetAllocations, saveBudgetSettings } from "@/app/actions/budget";
 import { Loader2 } from "lucide-react";
 
 const DEFAULT_CATEGORIES = [
@@ -33,20 +33,83 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const isFirstLoad = useRef(true);
 
   const advisor = useMemo(() => new FinancialAdvisor(), []);
 
-  const handleIncomeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: "SET_INCOME", amount: parseFloat(e.target.value) || 0 });
+  useEffect(() => {
+    const loadBudget = async () => {
+      if (!isFirstLoad.current) return;
+      
+      try {
+        const budget = await loadBudgetAllocations();
+        dispatch({ type: "RESET_ALLOCATIONS" });
+        
+        // Set income and savings
+        if (budget.totalIncome > 0) {
+          dispatch({ type: "SET_INCOME", amount: budget.totalIncome });
+        }
+        if (budget.targetSavings > 0) {
+          dispatch({ type: "SET_SAVINGS", amount: budget.targetSavings });
+        }
+        
+        // Add allocations
+        budget.allocations.forEach(allocation => {
+          dispatch({
+            type: "ADD_ALLOCATION",
+            allocation,
+          });
+        });
+        
+        isFirstLoad.current = false;
+      } catch (error) {
+        console.error("Failed to load budget:", error);
+        setError(error instanceof Error ? error.message : "Failed to load budget");
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    if (userId) {
+      loadBudget();
+    }
+  }, [userId, dispatch]);
+
+  const handleIncomeChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const newIncome = parseFloat(e.target.value) || 0;
+    dispatch({ type: "SET_INCOME", amount: newIncome });
+    try {
+      await saveBudgetSettings({
+        monthlyIncome: newIncome,
+        targetSavings: state.targetSavings,
+      });
+    } catch (error) {
+      console.error("Failed to save income:", error);
+      setError("Failed to save income. Your changes may not persist.");
+    }
   };
 
-  const handleSavingsChange = (e: ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: "SET_SAVINGS", amount: parseFloat(e.target.value) || 0 });
+  const handleSavingsChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const newSavings = parseFloat(e.target.value) || 0;
+    dispatch({ type: "SET_SAVINGS", amount: newSavings });
+    try {
+      await saveBudgetSettings({
+        monthlyIncome: state.totalIncome,
+        targetSavings: newSavings,
+      });
+    } catch (error) {
+      console.error("Failed to save savings target:", error);
+      setError("Failed to save savings target. Your changes may not persist.");
+    }
   };
 
   const handleAllocationSubmit = async () => {
     const amount = parseFloat(allocationAmount);
-    if (!selectedCategory || isNaN(amount) || !state.userId) return;
+    if (!selectedCategory || isNaN(amount) || !state.userId) {
+      setError("Please enter a valid category and amount");
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -60,6 +123,10 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
         spent: 0,
         available: amount,
       });
+
+      if (!allocationId) {
+        throw new Error("Failed to save allocation - no ID returned");
+      }
 
       dispatch({
         type: "ADD_ALLOCATION",
@@ -79,7 +146,7 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
       setAllocationAmount("");
     } catch (error) {
       console.error("Failed to save allocation:", error);
-      setError("Failed to save allocation. Please try again.");
+      setError(error instanceof Error ? error.message : "Failed to save allocation. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -121,12 +188,23 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
   };
 
   useEffect(() => {
-    if (state.totalIncome > 0 && state.userId) {
+    if (state.totalIncome > 0 && state.userId && !isFirstLoad.current) {
       updateSuggestions();
     }
-  }, [state.totalIncome, state.targetSavings, state.allocations, state.userId]);
+  }, [state.totalIncome, state.targetSavings, state.allocations]);
 
   const progress = state.totalIncome > 0 ? ((state.totalIncome - state.unallocated) / state.totalIncome * 100) : 0;
+
+  if (isInitialLoading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="mt-2 text-sm text-muted-foreground">Loading your budget...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!state.userId) {
     return (
@@ -237,7 +315,7 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
 
           {suggestions.length > 0 && (
             <div key="suggestions" className="space-y-2">
-              <Label>AI Suggestions</Label>
+              <Label>Suggestions</Label>
               <div className="space-y-1">
                 {suggestions.map((suggestion, index) => (
                   <p key={`suggestion-${index}`} className="text-sm text-muted-foreground">
