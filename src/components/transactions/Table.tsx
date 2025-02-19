@@ -13,7 +13,7 @@ type Transaction = {
   aiTags?: string[];
 };
 
-export function TransactionTable({ userId }: { userId: string }) {
+export function TransactionTable() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export function TransactionTable({ userId }: { userId: string }) {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await fetch(`/api/transactions?userId=${userId}`);
+        const response = await fetch('/api/transactions');
         if (!response.ok) throw new Error('Failed to fetch transactions');
         const data = await response.json();
         setTransactions(data);
@@ -33,7 +33,7 @@ export function TransactionTable({ userId }: { userId: string }) {
     };
 
     fetchTransactions();
-  }, [userId]);
+  }, []);
 
   if (isLoading) {
     return <div className="space-y-4">
