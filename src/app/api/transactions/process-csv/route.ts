@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { transactions } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { generateText } from 'ai';
+import { openrouter } from '@openrouter/ai-sdk-provider';
 
 type ParsedTransaction = {
   amount: number;
@@ -10,8 +12,6 @@ type ParsedTransaction = {
   description: string;
   aiTags: string[];
 };
-
-export const runtime = "edge";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -22,49 +22,43 @@ export async function POST(req: Request) {
   try {
     const { csvData } = await req.json();
     
-    const headers: HeadersInit = {
-      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "HTTP-Referer": process.env.VERCEL_URL ?? "http://localhost:3000",
-      "Content-Type": "application/json",
-    };
-
-    if (process.env.OPENROUTER_ORG_ID) {
-      headers["OR-ORGANIZATION"] = process.env.OPENROUTER_ORG_ID;
+    if (!csvData) {
+      return NextResponse.json({ error: "No CSV data provided" }, { status: 400 });
     }
-    
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct",
-        messages: [{
-          role: "system",
-          content: `Parse this CSV transaction data into structured JSON format:
-          - Convert dates to ISO format
-          - Categorize transactions into: 'income', 'expense', 'transfer'
-          - Detect payment methods
-          - Add relevant tags
-          Respond ONLY with valid JSON array of objects with fields:
-          {
-            amount: number (in cents),
-            date: string (ISO format),
-            categoryId: string,
-            description: string,
-            aiTags: string[]
-          }`
-        }, {
-          role: "user",
-          content: csvData
-        }]
-      })
+
+    // AI Processing
+    const { text: aiResponse } = await generateText({
+      model: openrouter('mistralai/mistral-7b-instruct'),
+      system: `Parse this CSV transaction data into structured JSON format:
+      - Convert dates to ISO format
+      - Categorize transactions into: 'income', 'expense', 'transfer'
+      - Detect payment methods
+      - Add relevant tags
+      Respond ONLY with valid JSON array of objects with fields:
+      {
+        amount: number (in cents),
+        date: string (ISO format),
+        categoryId: string,
+        description: string,
+        aiTags: string[]
+      }`,
+      messages: [{
+        role: 'user',
+        content: csvData
+      }]
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to process CSV with AI');
+    let parsedTransactions: ParsedTransaction[];
+    
+    try {
+      parsedTransactions = JSON.parse(aiResponse) as ParsedTransaction[];
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", parseError);
+      return NextResponse.json(
+        { error: "Invalid AI response format" },
+        { status: 500 }
+      );
     }
-
-    const result = await response.json();
-    const parsedTransactions = JSON.parse(result.choices[0].message.content) as ParsedTransaction[];
     
     // Insert into database
     const db = await getDb();
@@ -83,7 +77,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("CSV Processing Error:", error);
     return NextResponse.json(
-      { error: "Failed to process CSV" },
+      { error: error instanceof Error ? error.message : "Failed to process CSV" },
       { status: 500 }
     );
   }

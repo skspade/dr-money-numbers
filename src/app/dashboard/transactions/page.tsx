@@ -1,11 +1,11 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { getFullAuthOptions } from "@/lib/auth";
+import { getAuthOptionsWithDb } from "@/lib/auth";
 import { TransactionTable } from "@/components/transactions/Table";
 import { UploadCard } from "@/components/transactions/UploadCard";
 
 export default async function TransactionsPage() {
-  const authOptions = await getFullAuthOptions();
+  const authOptions = await getAuthOptionsWithDb();
   const session = await getServerSession(authOptions);
   
   if (!session?.user) {
