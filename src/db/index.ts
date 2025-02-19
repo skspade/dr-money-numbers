@@ -13,6 +13,7 @@ const createDb = async () => {
     if (!client) {
       client = new Client({
         connectionString: process.env.POSTGRES_URL,
+        native: false // Explicitly disable native bindings
       });
       // Connect to the database
       await client.connect();

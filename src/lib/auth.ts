@@ -77,7 +77,7 @@ const getAuthOptions = async (): Promise<AuthOptions> => {
           signIn: "/auth/signin",
           error: "/auth/error",
         },
-        debug: true, // Enable debug mode
+        debug: true,
         logger: {
           error: (code, ...message) => {
             console.error(code, ...message);
@@ -100,6 +100,19 @@ export const auth = async () => {
   return getServerSession(authOptions);
 };
 
-export const { signIn, signOut } = NextAuth(await getAuthOptions());
+// Default configuration for NextAuth
+const defaultAuthOptions: AuthOptions = {
+  providers: [
+    GitHub({
+      clientId: process.env.GITHUB_ID ?? "",
+      clientSecret: process.env.GITHUB_SECRET ?? "",
+    }),
+  ],
+  session: { strategy: "jwt" }
+};
 
-export const authOptions = await getAuthOptions(); 
+const handler = NextAuth(defaultAuthOptions);
+export const { signIn, signOut } = handler;
+
+// Export the async function to get the full auth options
+export const getFullAuthOptions = getAuthOptions; 

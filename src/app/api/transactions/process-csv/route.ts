@@ -1,9 +1,7 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { transactions } from "@/db/schema";
-import { authOptions } from "@/lib/auth";
-import OpenAI from "openai";
+import { auth } from "@/lib/auth";
 
 type ParsedTransaction = {
   amount: number;
@@ -13,12 +11,10 @@ type ParsedTransaction = {
   aiTags: string[];
 };
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export const runtime = "edge";
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -26,31 +22,49 @@ export async function POST(req: Request) {
   try {
     const { csvData } = await req.json();
     
-    // Process with AI
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{
-        role: "system",
-        content: `Parse this CSV transaction data into structured JSON format:
-        - Convert dates to ISO format
-        - Categorize transactions into: 'income', 'expense', 'transfer'
-        - Detect payment methods
-        - Add relevant tags
-        Respond ONLY with valid JSON array of objects with fields:
-        {
-          amount: number (in cents),
-          date: string (ISO format),
-          categoryId: string,
-          description: string,
-          aiTags: string[]
-        }`
-      }, {
-        role: "user",
-        content: csvData
-      }]
+    const headers: HeadersInit = {
+      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      "HTTP-Referer": process.env.VERCEL_URL ?? "http://localhost:3000",
+      "Content-Type": "application/json",
+    };
+
+    if (process.env.OPENROUTER_ORG_ID) {
+      headers["OR-ORGANIZATION"] = process.env.OPENROUTER_ORG_ID;
+    }
+    
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: "mistralai/mistral-7b-instruct",
+        messages: [{
+          role: "system",
+          content: `Parse this CSV transaction data into structured JSON format:
+          - Convert dates to ISO format
+          - Categorize transactions into: 'income', 'expense', 'transfer'
+          - Detect payment methods
+          - Add relevant tags
+          Respond ONLY with valid JSON array of objects with fields:
+          {
+            amount: number (in cents),
+            date: string (ISO format),
+            categoryId: string,
+            description: string,
+            aiTags: string[]
+          }`
+        }, {
+          role: "user",
+          content: csvData
+        }]
+      })
     });
 
-    const parsedTransactions = JSON.parse(completion.choices[0].message.content) as ParsedTransaction[];
+    if (!response.ok) {
+      throw new Error('Failed to process CSV with AI');
+    }
+
+    const result = await response.json();
+    const parsedTransactions = JSON.parse(result.choices[0].message.content) as ParsedTransaction[];
     
     // Insert into database
     const db = await getDb();
