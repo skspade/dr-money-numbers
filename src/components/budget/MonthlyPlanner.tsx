@@ -1,26 +1,25 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useMemo, ChangeEvent, useRef } from "react";
-import { useBudget } from "@/hooks/useBudget";
-import { FinancialAdvisor, FinancialContext } from "@/lib/ai-agents/financialAdvisor";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { saveBudgetAllocation, loadBudgetAllocations, saveBudgetSettings } from "@/app/actions/budget";
-import { Loader2 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useEffect, useState, ChangeEvent, useRef, useCallback } from 'react';
+import { useBudget } from '@/hooks/useBudget';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { saveBudgetAllocation, loadBudgetAllocations, saveBudgetSettings } from '@/app/actions/budget';
+import { Loader2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 const DEFAULT_CATEGORIES = [
-  "Housing",
-  "Transportation",
-  "Food",
-  "Utilities",
-  "Healthcare",
-  "Entertainment",
-  "Savings",
+  'Housing',
+  'Transportation',
+  'Food',
+  'Utilities',
+  'Healthcare',
+  'Entertainment',
+  'Savings',
 ] as const;
 
 interface MonthlyPlannerProps {
@@ -29,8 +28,8 @@ interface MonthlyPlannerProps {
 
 export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
   const { state, dispatch } = useBudget({ userId });
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [allocationAmount, setAllocationAmount] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [allocationAmount, setAllocationAmount] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,29 +37,29 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
   const isFirstLoad = useRef(true);
   const { status } = useSession();
 
-  const advisor = useMemo(() => new FinancialAdvisor(), []);
-
   useEffect(() => {
     const loadBudget = async () => {
-      if (!isFirstLoad.current || status !== 'authenticated') return;
-      
+      if (!isFirstLoad.current || status !== 'authenticated') {
+ return;
+}
+
       try {
         const budget = await loadBudgetAllocations();
-        
+
         // Set the entire initial state at once
         dispatch({
-          type: "SET_INITIAL_STATE",
+          type: 'SET_INITIAL_STATE',
           state: {
             totalIncome: budget.totalIncome,
             targetSavings: budget.targetSavings,
             allocations: budget.allocations,
           },
         });
-        
+
         isFirstLoad.current = false;
       } catch (error) {
-        console.error("Failed to load budget:", error);
-        setError(error instanceof Error ? error.message : "Failed to load budget");
+        console.error('Failed to load budget:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load budget');
       } finally {
         setIsInitialLoading(false);
       }
@@ -73,44 +72,44 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
 
   const handleIncomeChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const newIncome = parseFloat(e.target.value) || 0;
-    
+
     try {
       // Save to database first
       await saveBudgetSettings({
         monthlyIncome: newIncome,
         targetSavings: state.targetSavings,
       });
-      
+
       // Only update local state if save was successful
-      dispatch({ type: "SET_INCOME", amount: newIncome });
+      dispatch({ type: 'SET_INCOME', amount: newIncome });
     } catch (error) {
-      console.error("Failed to save income:", error);
-      setError("Failed to save income. Your changes may not persist.");
+      console.error('Failed to save income:', error);
+      setError('Failed to save income. Your changes may not persist.');
     }
   };
 
   const handleSavingsChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const newSavings = parseFloat(e.target.value) || 0;
-    
+
     try {
       // Save to database first
       await saveBudgetSettings({
         monthlyIncome: state.totalIncome,
         targetSavings: newSavings,
       });
-      
+
       // Only update local state if save was successful
-      dispatch({ type: "SET_SAVINGS", amount: newSavings });
+      dispatch({ type: 'SET_SAVINGS', amount: newSavings });
     } catch (error) {
-      console.error("Failed to save savings target:", error);
-      setError("Failed to save savings target. Your changes may not persist.");
+      console.error('Failed to save savings target:', error);
+      setError('Failed to save savings target. Your changes may not persist.');
     }
   };
 
   const handleAllocationSubmit = async () => {
     const amount = parseFloat(allocationAmount);
     if (!selectedCategory || isNaN(amount) || !state.userId) {
-      setError("Please enter a valid category and amount");
+      setError('Please enter a valid category and amount');
       return;
     }
 
@@ -121,80 +120,75 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
       const allocationId = await saveBudgetAllocation({
         category: selectedCategory,
         amount,
-        frequency: "MONTHLY",
+        frequency: 'MONTHLY',
         allocated: amount,
         spent: 0,
         available: amount,
       });
 
       if (!allocationId) {
-        throw new Error("Failed to save allocation - no ID returned");
+        throw new Error('Failed to save allocation - no ID returned');
       }
 
       dispatch({
-        type: "ADD_ALLOCATION",
+        type: 'ADD_ALLOCATION',
         allocation: {
           id: allocationId,
           userId: state.userId,
           category: selectedCategory,
           amount,
-          frequency: "MONTHLY",
+          frequency: 'MONTHLY',
           allocated: amount,
           spent: 0,
           available: amount,
         },
       });
 
-      setSelectedCategory("");
-      setAllocationAmount("");
+      setSelectedCategory('');
+      setAllocationAmount('');
     } catch (error) {
-      console.error("Failed to save allocation:", error);
-      setError(error instanceof Error ? error.message : "Failed to save allocation. Please try again.");
+      console.error('Failed to save allocation:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save allocation. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateSuggestions = async () => {
-    if (!state.userId) return;
-
-    setIsLoading(true);
-    setError(null);
+  const updateSuggestions = useCallback(async () => {
+    if (!state.userId) {
+ return;
+}
 
     try {
-      const context: FinancialContext = {
-        budget: {
-          ...state,
-          allocations: state.allocations.map(a => ({
-            ...a,
-            userId: state.userId,
-          })),
+      const response = await fetch('/api/budget/suggestions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        monthlyIncome: state.totalIncome,
-        monthlySavings: state.targetSavings,
-        expenses: state.allocations.map(a => ({
-          category: a.category,
-          amount: a.amount,
-          isRecurring: true
-        })),
-        goals: []
-      };
+        body: JSON.stringify({
+          income: state.totalIncome,
+          savings: state.targetSavings,
+          allocations: state.allocations,
+        }),
+      });
 
-      const advice = await advisor.generateAdvice(context);
-      setSuggestions(advice.map(a => `${a.title}: ${a.description}`));
+      if (!response.ok) {
+        throw new Error('Failed to fetch suggestions');
+      }
+
+      const data = await response.json();
+      setSuggestions(data);
     } catch (error) {
-      console.error("Failed to get suggestions:", error);
-      setError("Failed to get AI suggestions. Please try again.");
-    } finally {
-      setIsLoading(false);
+      console.error('Error fetching suggestions:', error);
+      setSuggestions([]);
     }
-  };
+  }, [state.totalIncome, state.targetSavings, state.allocations, state.userId]);
 
   useEffect(() => {
-    if (state.totalIncome > 0 && state.userId && !isFirstLoad.current) {
+    if (state.userId) {
       updateSuggestions();
     }
-  }, [state.totalIncome, state.targetSavings, state.allocations]);
+  }, [state.userId, updateSuggestions]);
 
   const progress = state.totalIncome > 0 ? ((state.totalIncome - state.unallocated) / state.totalIncome * 100) : 0;
 
@@ -232,7 +226,7 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
             <Input
               id="income"
               type="number"
-              value={state.totalIncome || ""}
+              value={state.totalIncome || ''}
               onChange={handleIncomeChange}
               placeholder="Enter your monthly income"
             />
@@ -243,7 +237,7 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
             <Input
               id="savings"
               type="number"
-              value={state.targetSavings || ""}
+              value={state.targetSavings || ''}
               onChange={handleSavingsChange}
               placeholder="Enter your target savings"
             />
@@ -282,7 +276,7 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
                     Adding...
                   </>
                 ) : (
-                  "Add"
+                  'Add'
                 )}
               </Button>
             </div>

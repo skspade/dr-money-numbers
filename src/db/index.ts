@@ -17,13 +17,13 @@ const createNodeDb = async () => {
       client = new Client({
         connectionString: process.env.POSTGRES_URL,
         ssl: process.env.NODE_ENV === 'production' ? {
-          rejectUnauthorized: false
-        } : undefined
+          rejectUnauthorized: false,
+        } : undefined,
       });
       // Connect to the database
       await client.connect();
     }
-    
+
     return drizzle(client, { schema });
   } catch (error) {
     console.error('Failed to connect to database:', error);
@@ -32,15 +32,13 @@ const createNodeDb = async () => {
 };
 
 // Create the database connection for Edge runtime
-const createEdgeDb = () => {
-  return drizzleVercel(sql, { schema });
-};
+const createEdgeDb = () => drizzleVercel(sql, { schema });
 
 // Get database instance based on runtime
 export const getDb = async () => {
   // Check if we're in Edge runtime
   const isEdge = process.env.NEXT_RUNTIME === 'edge';
-  
+
   if (isEdge) {
     return createEdgeDb();
   }
@@ -52,4 +50,4 @@ export const getDb = async () => {
 };
 
 // Export all schema objects
-export * from './schema'; 
+export * from './schema';

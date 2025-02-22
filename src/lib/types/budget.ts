@@ -29,10 +29,10 @@ export class BudgetGuard {
     private readonly income: number,
     private readonly savings: number,
     private readonly allocations: BudgetAllocation[],
-    isInitialSetup: boolean = false
+    isInitialSetup: boolean = false,
   ) {
     this._isInitialSetup = isInitialSetup;
-    this._availableFunds = income - savings - 
+    this._availableFunds = income - savings -
       allocations.reduce((sum, a) => sum + a.allocated, 0);
   }
 
@@ -46,16 +46,16 @@ export class BudgetGuard {
 
   private validateBasicRules(allocation: BudgetAllocation): { valid: boolean; message?: string } {
     if (allocation.allocated < 0) {
-      return { 
-        valid: false, 
-        message: 'Allocation amount cannot be negative' 
+      return {
+        valid: false,
+        message: 'Allocation amount cannot be negative',
       };
     }
 
     if (this.income <= 0) {
       return {
         valid: false,
-        message: 'Income must be set before making allocations'
+        message: 'Income must be set before making allocations',
       };
     }
 
@@ -64,20 +64,22 @@ export class BudgetGuard {
 
   canAllocate(amount: number): boolean {
     // Even during initial setup, we need some basic validation
-    if (this.income <= 0) return false;
-    
+    if (this.income <= 0) {
+ return false;
+}
+
     // During initial setup, we only check against total income
     if (this._isInitialSetup) {
       return amount <= this.income;
     }
-    
+
     // Normal operation checks against available funds
     return amount <= this._availableFunds;
   }
 
-  validateAllocation(allocation: BudgetAllocation, isInitialAllocation: boolean = false): { 
-    valid: boolean; 
-    message?: string; 
+  validateAllocation(allocation: BudgetAllocation, isInitialAllocation: boolean = false): {
+    valid: boolean;
+    message?: string;
   } {
     // Always check basic rules first
     const basicValidation = this.validateBasicRules(allocation);
@@ -89,11 +91,11 @@ export class BudgetGuard {
     if (this._isInitialSetup || isInitialAllocation) {
       const currentTotal = BudgetGuard.getTotalAllocated(this.allocations);
       const newTotal = currentTotal + allocation.allocated;
-      
+
       if (newTotal > this.income) {
         return {
           valid: false,
-          message: `Total allocations (${newTotal}) cannot exceed income (${this.income})`
+          message: `Total allocations (${newTotal}) cannot exceed income (${this.income})`,
         };
       }
       return { valid: true };
@@ -101,9 +103,9 @@ export class BudgetGuard {
 
     // Normal operation validation
     if (!this.canAllocate(allocation.allocated)) {
-      return { 
-        valid: false, 
-        message: `Insufficient funds. Available: $${this._availableFunds.toFixed(2)}` 
+      return {
+        valid: false,
+        message: `Insufficient funds. Available: $${this._availableFunds.toFixed(2)}`,
       };
     }
 

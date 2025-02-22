@@ -1,15 +1,15 @@
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import { getAuthOptionsWithDb } from "@/lib/auth";
-import { TransactionTable } from "@/components/transactions/Table";
-import { UploadCard } from "@/components/transactions/UploadCard";
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { getAuthOptionsWithDb } from '@/lib/auth';
+import { TransactionTable } from '@/components/transactions/Table';
+import { UploadCard } from '@/components/transactions/UploadCard';
 
 export default async function TransactionsPage() {
   const authOptions = await getAuthOptionsWithDb();
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user) {
-    redirect("/auth/signin");
+    redirect('/auth/signin');
   }
 
   return (
@@ -21,4 +21,4 @@ export default async function TransactionsPage() {
       <TransactionTable />
     </div>
   );
-} 
+}

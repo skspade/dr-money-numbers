@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
-import { getDb } from "@/db";
-import { transactions } from "@/db/schema";
-import { auth } from "@/lib/auth";
-import { generateText } from 'ai';
-import { openrouter } from '@openrouter/ai-sdk-provider';
-
+import { NextResponse } from 'next/server';
+import { getDb } from '@/db';
+import { transactions } from '@/db/schema';
+import { auth } from '@/lib/auth';
+import { togetherai } from '@ai-sdk/togetherai';
 type ParsedTransaction = {
   amount: number;
   date: string;
@@ -16,19 +14,20 @@ type ParsedTransaction = {
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const { csvData } = await req.json();
-    
+
     if (!csvData) {
-      return NextResponse.json({ error: "No CSV data provided" }, { status: 400 });
+      return NextResponse.json({ error: 'No CSV data provided' }, { status: 400 });
     }
 
     // AI Processing
-    const { text: aiResponse } = await generateText({
-      model: openrouter('mistralai/mistral-7b-instruct'),
+    // @ts-ignore - togetherai types are not fully compatible with the current version
+    const { text: aiResponse } = await togetherai.generateText({
+      model: togetherai('mistralai/Mistral-7B-Instruct-v0.3'),
       system: `Parse this CSV transaction data into structured JSON format:
       - Convert dates to ISO format
       - Categorize transactions into: 'income', 'expense', 'transfer'
@@ -44,22 +43,22 @@ export async function POST(req: Request) {
       }`,
       messages: [{
         role: 'user',
-        content: csvData
-      }]
+        content: csvData,
+      }],
     });
 
     let parsedTransactions: ParsedTransaction[];
-    
+
     try {
       parsedTransactions = JSON.parse(aiResponse) as ParsedTransaction[];
     } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError);
+      console.error('Failed to parse AI response:', parseError);
       return NextResponse.json(
-        { error: "Invalid AI response format" },
-        { status: 500 }
+        { error: 'Invalid AI response format' },
+        { status: 500 },
       );
     }
-    
+
     // Insert into database
     const db = await getDb();
     const inserted = await db.insert(transactions).values(
@@ -69,16 +68,16 @@ export async function POST(req: Request) {
         date: new Date(tx.date),
         categoryId: tx.categoryId,
         description: tx.description,
-        aiTags: tx.aiTags
-      }))
+        aiTags: tx.aiTags,
+      })),
     ).returning();
 
     return NextResponse.json(inserted);
   } catch (error) {
-    console.error("CSV Processing Error:", error);
+    console.error('CSV Processing Error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to process CSV" },
-      { status: 500 }
+      { error: error instanceof Error ? error.message : 'Failed to process CSV' },
+      { status: 500 },
     );
   }
-} 
+}

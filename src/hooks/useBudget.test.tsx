@@ -156,7 +156,7 @@ describe('useBudget', () => {
     });
 
     expect(result.current.error).toBe('Savings cannot exceed income');
-    
+
     act(() => {
       jest.advanceTimersByTime(3000);
     });
@@ -200,7 +200,7 @@ describe('useBudget', () => {
   it('should handle session state transitions correctly', () => {
     (useSession as jest.Mock).mockReturnValue({
       data: null,
-      status: 'loading'
+      status: 'loading',
     });
 
     const { result, rerender } = renderHook(() => useBudget());
@@ -210,7 +210,7 @@ describe('useBudget', () => {
     // Simulate session loading completion
     (useSession as jest.Mock).mockReturnValue({
       data: { user: { id: 'test-user-id' } },
-      status: 'authenticated'
+      status: 'authenticated',
     });
 
     rerender();
@@ -287,4 +287,4 @@ describe('useBudget', () => {
     expect(result.current.state.allocations).toHaveLength(1);
     expect(result.current.error).not.toBeNull();
   });
-}); 
+});

@@ -52,19 +52,19 @@ export class FinancialAdvisor {
           'Review your financial goals',
           'Consider increasing emergency fund',
           'Look for underfunded categories',
-          'Consider debt paydown if applicable'
+          'Consider debt paydown if applicable',
         ],
         priority: 'high',
-        potentialImpact: context.budget.unallocated / context.monthlyIncome
+        potentialImpact: context.budget.unallocated / context.monthlyIncome,
       });
     }
 
     // Check for high spending categories
     const highSpendingCategories = context.budget.allocations
-      .filter(a => a.spent / a.allocated > 0.9)
-      .map(a => ({
+      .filter((a) => a.spent / a.allocated > 0.9)
+      .map((a) => ({
         category: a.category,
-        overspend: a.spent - a.allocated
+        overspend: a.spent - a.allocated,
       }));
 
     if (highSpendingCategories.length > 0) {
@@ -72,11 +72,11 @@ export class FinancialAdvisor {
         category: 'spending',
         title: 'High Spending Alert',
         description: `You're close to or exceeding your budget in ${highSpendingCategories.length} categories.`,
-        steps: highSpendingCategories.map(c => 
-          `Review ${c.category} spending (${c.overspend > 0 ? 'overspent by' : 'remaining'} $${Math.abs(c.overspend).toFixed(2)})`
+        steps: highSpendingCategories.map((c) =>
+          `Review ${c.category} spending (${c.overspend > 0 ? 'overspent by' : 'remaining'} $${Math.abs(c.overspend).toFixed(2)})`,
         ),
         priority: 'high',
-        potentialImpact: highSpendingCategories.reduce((sum, c) => sum + c.overspend, 0) / context.monthlyIncome
+        potentialImpact: highSpendingCategories.reduce((sum, c) => sum + c.overspend, 0) / context.monthlyIncome,
       });
     }
 
@@ -91,10 +91,10 @@ export class FinancialAdvisor {
           'Review discretionary spending categories',
           'Look for opportunities to increase income',
           'Consider automating savings transfers',
-          'Review and optimize fixed expenses'
+          'Review and optimize fixed expenses',
         ],
         priority: 'medium',
-        potentialImpact: (0.2 - savingsRate) * context.monthlyIncome
+        potentialImpact: (0.2 - savingsRate) * context.monthlyIncome,
       });
     }
 
@@ -106,7 +106,7 @@ export class FinancialAdvisor {
     status: 'over' | 'under' | 'on-track';
     recommendation: string;
   }[]> {
-    const analysis = context.budget.allocations.map(allocation => {
+    const analysis = context.budget.allocations.map((allocation) => {
       const spendingRatio = allocation.spent / allocation.allocated;
       let status: 'over' | 'under' | 'on-track' = 'on-track';
       let recommendation = '';
@@ -122,7 +122,7 @@ export class FinancialAdvisor {
       return {
         category: allocation.category,
         status,
-        recommendation
+        recommendation,
       };
     });
 
@@ -131,35 +131,35 @@ export class FinancialAdvisor {
 
   async suggestBudgetAdjustments(context: FinancialContext): Promise<BudgetSuggestion[]> {
     const suggestions: BudgetSuggestion[] = [];
-    
+
     // Analyze each category for potential adjustments
-    context.budget.allocations.forEach(allocation => {
+    context.budget.allocations.forEach((allocation) => {
       const spendingRatio = allocation.spent / allocation.allocated;
       const averageMonthlySpend = allocation.spent; // In a real implementation, this would use historical data
-      
+
       if (spendingRatio > 0.9) {
         suggestions.push({
           category: allocation.category,
           currentAllocation: allocation.allocated,
           suggestedAdjustment: Math.ceil(averageMonthlySpend * 1.1) - allocation.allocated,
-          rationale: "Current allocation might be insufficient based on spending patterns",
+          rationale: 'Current allocation might be insufficient based on spending patterns',
           confidenceScore: 0.8,
           impactAnalysis: {
-            shortTerm: "Reduce stress about overspending",
-            longTerm: "More accurate budgeting and better financial planning"
-          }
+            shortTerm: 'Reduce stress about overspending',
+            longTerm: 'More accurate budgeting and better financial planning',
+          },
         });
       } else if (spendingRatio < 0.5) {
         suggestions.push({
           category: allocation.category,
           currentAllocation: allocation.allocated,
           suggestedAdjustment: Math.floor(averageMonthlySpend * 1.2) - allocation.allocated,
-          rationale: "Category might be over-budgeted",
+          rationale: 'Category might be over-budgeted',
           confidenceScore: 0.7,
           impactAnalysis: {
-            shortTerm: "Free up money for other categories",
-            longTerm: "More efficient use of available funds"
-          }
+            shortTerm: 'Free up money for other categories',
+            longTerm: 'More efficient use of available funds',
+          },
         });
       }
     });

@@ -1,25 +1,27 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Upload } from "lucide-react";
+import { useState, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Upload } from 'lucide-react';
 
 export function UploadCard() {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileUpload = useCallback(async (file: File) => {
-    if (!file) return;
-    
+    if (!file) {
+ return;
+}
+
     setIsUploading(true);
     setError(null);
-    
+
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const csvData = e.target?.result as string;
-        
+
         const response = await fetch('/api/transactions/process-csv', {
           method: 'POST',
           headers: {
@@ -89,4 +91,4 @@ export function UploadCard() {
       </DialogContent>
     </Dialog>
   );
-} 
+}

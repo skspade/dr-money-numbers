@@ -30,4 +30,4 @@ runMigrations().catch((err) => {
   console.error('Migration script failed!');
   console.error(err);
   process.exit(1);
-}); 
+});

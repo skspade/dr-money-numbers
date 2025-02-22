@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react';
 
 interface Transaction {
   id: string
@@ -9,31 +9,31 @@ interface Transaction {
   type: 'income' | 'expense'
 }
 
-interface UseTransactionsReturn {
-  transactions: Transaction[]
-  isLoading: boolean
-  error: Error | null
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>
-  deleteTransaction: (id: string) => Promise<void>
-  updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>
+export interface UseTransactionsReturn {
+  transactions: Transaction[];
+  isLoading: boolean;
+  error: Error | null;
+  addTransaction: (_transaction: Transaction) => Promise<void>;
+  deleteTransaction: (_id: string) => Promise<void>;
+  updateTransaction: (_id: string, _updates: Partial<Transaction>) => Promise<void>;
 }
 
 export function useTransactions(): UseTransactionsReturn {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
+  const [transactions, _setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, _setIsLoading] = useState(false);
+  const [error, _setError] = useState<Error | null>(null);
 
-  const addTransaction = useCallback(async (transaction: Omit<Transaction, 'id'>) => {
-    // Implementation will go here
-  }, [])
+  const addTransaction = useCallback(async (_transaction: Transaction) => {
+    // Implementation coming soon
+  }, []);
 
-  const deleteTransaction = useCallback(async (id: string) => {
-    // Implementation will go here
-  }, [])
+  const deleteTransaction = useCallback(async (_id: string) => {
+    // Implementation coming soon
+  }, []);
 
-  const updateTransaction = useCallback(async (id: string, updates: Partial<Transaction>) => {
-    // Implementation will go here
-  }, [])
+  const updateTransaction = useCallback(async (_id: string, _updates: Partial<Transaction>) => {
+    // Implementation coming soon
+  }, []);
 
   return {
     transactions,
@@ -41,6 +41,6 @@ export function useTransactions(): UseTransactionsReturn {
     error,
     addTransaction,
     deleteTransaction,
-    updateTransaction
-  }
+    updateTransaction,
+  };
 }

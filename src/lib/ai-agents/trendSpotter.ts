@@ -18,17 +18,17 @@ interface TrendInsight {
 }
 
 export class TrendSpotter {
-  async analyzeTransactions(data: TrendData): Promise<TrendInsight[]> {
-    // Implementation will go here
-    return []
+  async analyzeTransactions(_data: TrendData): Promise<TrendInsight[]> {
+    // Implementation coming soon
+    return [];
   }
 
-  async predictFutureSpending(historicalData: TrendData): Promise<{
+  async predictFutureSpending(_historicalData: TrendData): Promise<{
     category: string
     predictedAmount: number
     confidence: number
   }[]> {
-    // Implementation will go here
-    return []
+    // Implementation coming soon
+    return [];
   }
 }

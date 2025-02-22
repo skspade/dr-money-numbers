@@ -1,16 +1,16 @@
-"use server";
+'use server';
 
-import { getDb } from "@/db";
-import { categories, userBudget } from "@/db/schema";
-import { auth } from "@/lib/auth";
-import { BudgetAllocation } from "@/lib/types/budget";
-import { and, eq } from "drizzle-orm";
+import { getDb } from '@/db';
+import { categories, userBudget } from '@/db/schema';
+import { auth } from '@/lib/auth';
+import { BudgetAllocation } from '@/lib/types/budget';
+import { and, eq } from 'drizzle-orm';
 
-export async function saveBudgetAllocation(allocation: Omit<BudgetAllocation, "id" | "userId">) {
+export async function saveBudgetAllocation(allocation: Omit<BudgetAllocation, 'id' | 'userId'>) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      throw new Error("Not authenticated");
+      throw new Error('Not authenticated');
     }
 
     const db = await getDb();
@@ -26,8 +26,8 @@ export async function saveBudgetAllocation(allocation: Omit<BudgetAllocation, "i
       .where(
         and(
           eq(categories.userId, session.user.id),
-          eq(categories.name, allocation.category)
-        )
+          eq(categories.name, allocation.category),
+        ),
       );
 
     if (existingCategories.length > 0) {
@@ -41,7 +41,7 @@ export async function saveBudgetAllocation(allocation: Omit<BudgetAllocation, "i
         })
         .where(eq(categories.id, existingCategories[0].id))
         .returning();
-      
+
       return updated.id;
     } else {
       // Create new category
@@ -72,7 +72,7 @@ export async function loadBudgetAllocations() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      throw new Error("Not authenticated");
+      throw new Error('Not authenticated');
     }
 
     const db = await getDb();
@@ -92,7 +92,7 @@ export async function loadBudgetAllocations() {
     return {
       totalIncome: budgetSettings?.monthlyIncome ? budgetSettings.monthlyIncome / 100 : 0,
       targetSavings: budgetSettings?.targetSavings ? budgetSettings.targetSavings / 100 : 0,
-      allocations: userCategories.map(category => ({
+      allocations: userCategories.map((category) => ({
         id: category.id,
         userId: category.userId,
         category: category.name,
@@ -101,7 +101,7 @@ export async function loadBudgetAllocations() {
         allocated: category.target / 100,
         spent: 0,
         available: category.available / 100,
-      }))
+      })),
     };
   } catch (error) {
     console.error('Failed to load budget:', error);
@@ -113,7 +113,7 @@ export async function saveBudgetSettings({ monthlyIncome, targetSavings }: { mon
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      throw new Error("Not authenticated");
+      throw new Error('Not authenticated');
     }
 
     const db = await getDb();
@@ -141,4 +141,4 @@ export async function saveBudgetSettings({ monthlyIncome, targetSavings }: { mon
     console.error('Failed to save budget settings:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to save budget settings');
   }
-} 
+}

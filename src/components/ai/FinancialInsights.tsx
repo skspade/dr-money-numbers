@@ -1,21 +1,21 @@
-import React from 'react'
+import React from 'react';
 
 export interface FinancialInsightsProps {
-  insights: {
-    id: string
-    category: 'spending' | 'saving' | 'investment' | 'budget'
-    title: string
-    description: string
-    actionItems: string[]
-    priority: 'high' | 'medium' | 'low'
-  }[]
-  onActionTaken?: (insightId: string, actionIndex: number) => void
+  _insights: {
+    id: string;
+    message: string;
+    recommendations: string[];
+  }[];
+  _onActionTaken: (insightId: string, recommendationIndex: number) => void;
 }
 
-export function FinancialInsights({ insights, onActionTaken }: FinancialInsightsProps) {
+export function FinancialInsights({
+  _insights,
+  _onActionTaken,
+}: FinancialInsightsProps) {
   return (
     <div>
       {/* Add component implementation */}
     </div>
-  )
+  );
 }

@@ -1,14 +1,14 @@
-"use server";
+'use server';
 
-import { getDb } from "@/db";
-import { categories, transactions } from "@/db/schema";
-import { BudgetAllocation } from "@/lib/types/budget";
-import { and, eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { getDb } from '@/db';
+import { categories, transactions } from '@/db/schema';
+import { BudgetAllocation } from '@/lib/types/budget';
+import { and, eq } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 
 export async function upsertCategory(
   userId: string,
-  allocation: BudgetAllocation
+  allocation: BudgetAllocation,
 ) {
   try {
     const db = await getDb();
@@ -17,7 +17,7 @@ export async function upsertCategory(
       userId,
       name: allocation.category,
       target: allocation.target?.amount || 0,
-      frequency: allocation.target?.type === "monthly" ? "MONTHLY" : "WEEKLY",
+      frequency: allocation.target?.type === 'monthly' ? 'MONTHLY' : 'WEEKLY',
       available: allocation.available,
     }).onConflictDoUpdate({
       target: categories.id,
@@ -27,10 +27,10 @@ export async function upsertCategory(
       },
     });
 
-    revalidatePath("/dashboard/budget");
+    revalidatePath('/dashboard/budget');
     return { success: true };
   } catch (error) {
-    console.error("Failed to upsert category:", error);
+    console.error('Failed to upsert category:', error);
     return { success: false, error };
   }
 }
@@ -38,7 +38,7 @@ export async function upsertCategory(
 export async function updateSpending(
   userId: string,
   categoryId: string,
-  amount: number
+  amount: number,
 ) {
   try {
     const db = await getDb();
@@ -66,10 +66,10 @@ export async function updateSpending(
         .where(eq(categories.id, categoryId));
     }
 
-    revalidatePath("/dashboard/budget");
+    revalidatePath('/dashboard/budget');
     return { success: true };
   } catch (error) {
-    console.error("Failed to update spending:", error);
+    console.error('Failed to update spending:', error);
     return { success: false, error };
   }
 }
@@ -84,7 +84,7 @@ export async function getCategories(userId: string) {
 
     return { success: true, data: userCategories };
   } catch (error) {
-    console.error("Failed to fetch categories:", error);
+    console.error('Failed to fetch categories:', error);
     return { success: false, error };
   }
 }
@@ -104,7 +104,7 @@ export async function getTransactions(userId: string, categoryId?: string) {
 
     return { success: true, data: userTransactions };
   } catch (error) {
-    console.error("Failed to fetch transactions:", error);
+    console.error('Failed to fetch transactions:', error);
     return { success: false, error };
   }
-} 
+}

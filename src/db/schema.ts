@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, primaryKey, pgEnum, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, primaryKey, pgEnum, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -7,90 +7,90 @@ export const targetFrequencyEnum = pgEnum('target_frequency', ['WEEKLY', 'MONTHL
 export type TargetFrequency = 'WEEKLY' | 'MONTHLY' | 'ANNUAL';
 
 // NextAuth Tables
-export const users = pgTable("users", {
-  id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
-  name: text("name"),
-  email: text("email").unique(),
-  emailVerified: timestamp("emailVerified", { mode: "date" }),
-  image: text("image"),
+export const users = pgTable('users', {
+  id: text('id').notNull().primaryKey().$defaultFn(() => createId()),
+  name: text('name'),
+  email: text('email').unique(),
+  emailVerified: timestamp('emailVerified', { mode: 'date' }),
+  image: text('image'),
 });
 
-export const accounts = pgTable("account", {
-  userId: text("userId")
+export const accounts = pgTable('account', {
+  userId: text('userId')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  type: text("type").notNull(),
-  provider: text("provider").notNull(),
-  providerAccountId: text("providerAccountId").notNull(),
-  refresh_token: text("refresh_token"),
-  access_token: text("access_token"),
-  expires_at: integer("expires_at"),
-  token_type: text("token_type"),
-  scope: text("scope"),
-  id_token: text("id_token"),
-  session_state: text("session_state"),
+    .references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),
+  provider: text('provider').notNull(),
+  providerAccountId: text('providerAccountId').notNull(),
+  refresh_token: text('refresh_token'),
+  access_token: text('access_token'),
+  expires_at: integer('expires_at'),
+  token_type: text('token_type'),
+  scope: text('scope'),
+  id_token: text('id_token'),
+  session_state: text('session_state'),
 }, (account) => ({
   compoundKey: primaryKey({ columns: [account.provider, account.providerAccountId] }),
-  userIdIdx: index("account_userId_idx").on(account.userId)
+  userIdIdx: index('account_userId_idx').on(account.userId),
 }));
 
-export const sessions = pgTable("session", {
-  sessionToken: text("sessionToken").notNull().primaryKey(),
-  userId: text("userId")
+export const sessions = pgTable('session', {
+  sessionToken: text('sessionToken').notNull().primaryKey(),
+  userId: text('userId')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
+    .references(() => users.id, { onDelete: 'cascade' }),
+  expires: timestamp('expires', { mode: 'date' }).notNull(),
 }, (session) => ({
-  userIdIdx: index("session_userId_idx").on(session.userId)
+  userIdIdx: index('session_userId_idx').on(session.userId),
 }));
 
-export const verificationTokens = pgTable("verificationToken", {
-  identifier: text("identifier").notNull(),
-  token: text("token").notNull(),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
+export const verificationTokens = pgTable('verificationToken', {
+  identifier: text('identifier').notNull(),
+  token: text('token').notNull(),
+  expires: timestamp('expires', { mode: 'date' }).notNull(),
 }, (vt) => ({
   compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
 }));
 
 // Application Tables
-export const categories = pgTable("category", {
-  id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
-  userId: text("userId")
+export const categories = pgTable('category', {
+  id: text('id').notNull().primaryKey().$defaultFn(() => createId()),
+  userId: text('userId')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  target: integer("target").notNull(),
-  frequency: targetFrequencyEnum("frequency").notNull(),
-  available: integer("available").notNull(),
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  target: integer('target').notNull(),
+  frequency: targetFrequencyEnum('frequency').notNull(),
+  available: integer('available').notNull(),
 });
 
-export const transactions = pgTable("transaction", {
-  id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
-  userId: text("userId")
+export const transactions = pgTable('transaction', {
+  id: text('id').notNull().primaryKey().$defaultFn(() => createId()),
+  userId: text('userId')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  categoryId: text("categoryId")
+    .references(() => users.id, { onDelete: 'cascade' }),
+  categoryId: text('categoryId')
     .notNull()
-    .references(() => categories.id, { onDelete: "cascade" }),
-  amount: integer("amount").notNull(),
-  date: timestamp("date").notNull(),
-  aiTags: text("aiTags").array(),
+    .references(() => categories.id, { onDelete: 'cascade' }),
+  amount: integer('amount').notNull(),
+  date: timestamp('date').notNull(),
+  aiTags: text('aiTags').array(),
 });
 
-export const aiSettings = pgTable("aiSetting", {
-  id: text("id").notNull().primaryKey().$defaultFn(() => createId()),
-  userId: text("userId")
+export const aiSettings = pgTable('aiSetting', {
+  id: text('id').notNull().primaryKey().$defaultFn(() => createId()),
+  userId: text('userId')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: 'cascade' }),
 });
 
-export const userBudget = pgTable("userBudget", {
-  userId: text("userId")
+export const userBudget = pgTable('userBudget', {
+  userId: text('userId')
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" })
+    .references(() => users.id, { onDelete: 'cascade' })
     .primaryKey(),
-  monthlyIncome: integer("monthlyIncome").notNull().default(0),
-  targetSavings: integer("targetSavings").notNull().default(0),
+  monthlyIncome: integer('monthlyIncome').notNull().default(0),
+  targetSavings: integer('targetSavings').notNull().default(0),
 });
 
 // Relations
@@ -140,4 +140,4 @@ export const aiSettingsRelations = relations(aiSettings, ({ one }) => ({
     fields: [aiSettings.userId],
     references: [users.id],
   }),
-})); 
+}));

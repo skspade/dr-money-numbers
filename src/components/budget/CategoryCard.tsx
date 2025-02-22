@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 export interface CategoryCardProps {
   title: string
@@ -11,5 +11,5 @@ export function CategoryCard({}: CategoryCardProps) {
     <div>
       {/* Add component implementation */}
     </div>
-  )
+  );
 }

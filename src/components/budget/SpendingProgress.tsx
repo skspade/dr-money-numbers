@@ -1,19 +1,21 @@
-import React from 'react'
+import React from 'react';
 
 export interface SpendingProgressProps {
-  currentSpend: number
-  budgetLimit: number
-  category: string
-  timeRemaining: {
-    days: number
-    percentage: number
-  }
+  _currentSpend: number
+  _budgetLimit: number
+  _category: string
+  _timeRemaining: string
 }
 
-export function SpendingProgress({ currentSpend, budgetLimit, category, timeRemaining }: SpendingProgressProps) {
+export function SpendingProgress({
+  _currentSpend,
+  _budgetLimit,
+  _category,
+  _timeRemaining,
+}: SpendingProgressProps) {
   return (
     <div>
       {/* Add component implementation */}
     </div>
-  )
+  );
 }

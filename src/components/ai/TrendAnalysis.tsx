@@ -1,23 +1,25 @@
-import React from 'react'
+import React from 'react';
 
 export interface TrendAnalysisProps {
-  data: {
-    period: string
-    spending: number
-    income: number
-    savings: number
-  }[]
-  insights: {
-    type: 'positive' | 'negative' | 'neutral'
-    message: string
-    metric: string
-  }[]
+  _data: {
+    date: string;
+    amount: number;
+    category: string;
+  }[];
+  _insights: {
+    trend: string;
+    significance: number;
+    recommendation: string;
+  }[];
 }
 
-export function TrendAnalysis({ data, insights }: TrendAnalysisProps) {
+export function TrendAnalysis({
+  _data,
+  _insights,
+}: TrendAnalysisProps) {
   return (
     <div>
       {/* Add component implementation */}
     </div>
-  )
+  );
 }

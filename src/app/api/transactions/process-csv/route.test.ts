@@ -11,15 +11,13 @@ jest.mock('@/db', () => ({
   getDb: jest.fn(),
 }));
 
-jest.mock('openai', () => {
-  return jest.fn().mockImplementation(() => ({
+jest.mock('openai', () => jest.fn().mockImplementation(() => ({
     chat: {
       completions: {
         create: jest.fn(),
       },
     },
-  }));
-});
+  })));
 
 describe('POST /api/transactions/process-csv', () => {
   let mockDb: any;
@@ -106,7 +104,7 @@ describe('POST /api/transactions/process-csv', () => {
         categoryId: tx.categoryId,
         description: tx.description,
         aiTags: tx.aiTags,
-      }))
+      })),
     );
   });
 

@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SignInButton } from "@/components/auth/SignInButton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { SignInButton } from '@/components/auth/SignInButton';
 
 export default function SignIn() {
   return (
@@ -15,4 +15,4 @@ export default function SignIn() {
       </Card>
     </div>
   );
-} 
+}

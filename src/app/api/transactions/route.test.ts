@@ -1,7 +1,6 @@
 import { GET } from './route';
 import { getServerSession } from 'next-auth';
 import { getDb } from '@/db';
-import { NextResponse } from 'next/server';
 
 jest.mock('next-auth', () => ({
   getServerSession: jest.fn(),

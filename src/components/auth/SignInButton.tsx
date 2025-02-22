@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { signIn } from "next-auth/react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Button } from '@/components/ui/button';
+import { signIn } from 'next-auth/react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export function SignInButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,12 +12,12 @@ export function SignInButton() {
   const handleSignIn = async () => {
     try {
       setIsLoading(true);
-      await signIn("github", {
+      await signIn('github', {
         callbackUrl: `${window.location.origin}/dashboard`,
       });
     } catch (error) {
-      console.error("Sign in error:", error);
-      router.push("/auth/error");
+      console.error('Sign in error:', error);
+      router.push('/auth/error');
     } finally {
       setIsLoading(false);
     }
@@ -30,7 +30,7 @@ export function SignInButton() {
       disabled={isLoading}
       variant="default"
     >
-      {isLoading ? "Signing in..." : "Sign in with GitHub"}
+      {isLoading ? 'Signing in...' : 'Sign in with GitHub'}
     </Button>
   );
-} 
+}

@@ -1,9 +1,9 @@
-import NextAuth, { AuthOptions } from "next-auth";
-import GitHub from "next-auth/providers/github";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { getDb } from "@/db";
-import { getServerSession } from "next-auth";
-import { users } from "@/db/schema";
+import NextAuth, { AuthOptions } from 'next-auth';
+import GitHub from 'next-auth/providers/github';
+import { DrizzleAdapter } from '@auth/drizzle-adapter';
+import { getDb } from '@/db';
+import { getServerSession } from 'next-auth';
+import { users } from '@/db/schema';
 
 // Base auth options without database adapter
 export const authOptions: AuthOptions = {
@@ -13,29 +13,29 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.GITHUB_SECRET!,
       authorization: {
         params: {
-          prompt: "consent",
+          prompt: 'consent',
         },
       },
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === "production" ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
       options: {
         httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      }
-    }
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log("Sign in attempt:", { user, account, profile });
+      console.log('Sign in attempt:', { user, account, profile });
       return true;
     },
     async jwt({ token, user }) {
@@ -53,14 +53,17 @@ export const authOptions: AuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      else if (new URL(url).origin === baseUrl) return url;
+      if (url.startsWith('/')) {
+ return `${baseUrl}${url}`;
+} else if (new URL(url).origin === baseUrl) {
+ return url;
+}
       return baseUrl;
     },
   },
   pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
+    signIn: '/auth/signin',
+    error: '/auth/error',
   },
   debug: true,
   logger: {
@@ -79,13 +82,13 @@ export const authOptions: AuthOptions = {
 // Function to get auth options with database adapter
 export const getAuthOptionsWithDb = async (): Promise<AuthOptions> => {
   const db = await getDb();
-  
+
   // Debug: Check if tables exist
   try {
     const result = await db.select().from(users).limit(1);
-    console.log("Users table exists, sample:", result);
+    console.log('Users table exists, sample:', result);
   } catch (error) {
-    console.error("Error checking users table:", error);
+    console.error('Error checking users table:', error);
   }
 
   return {
@@ -100,4 +103,4 @@ export const auth = async () => {
 };
 
 const handler = NextAuth(authOptions);
-export const { signIn, signOut } = handler; 
+export const { signIn, signOut } = handler;

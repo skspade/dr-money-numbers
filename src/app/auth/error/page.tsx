@@ -1,13 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function AuthError({
   searchParams,
 }: {
   searchParams: { error?: string };
 }) {
-  const error = searchParams.error || "An error occurred during authentication";
+  const error = searchParams.error || 'An error occurred during authentication';
 
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -25,4 +25,4 @@ export default function AuthError({
       </Card>
     </div>
   );
-} 
+}

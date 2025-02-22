@@ -3,7 +3,7 @@ import { BudgetAllocation, BudgetState, BudgetGuard } from '../lib/types/budget'
 import { useSession } from 'next-auth/react';
 import { useDebouncedCallback } from 'use-debounce';
 
-type BudgetAction = 
+type BudgetAction =
   | { type: 'SET_INCOME'; amount: number }
   | { type: 'SET_SAVINGS'; amount: number }
   | { type: 'ADD_ALLOCATION'; allocation: BudgetAllocation }
@@ -27,24 +27,22 @@ export const useBudget = (initialState?: BudgetInitialState) => {
   }));
 
   const [isInitialSetup, setIsInitialSetup] = useState(
-    !initialState?.totalIncome || initialState.totalIncome === 0
+    !initialState?.totalIncome || initialState.totalIncome === 0,
   );
 
   const [error, setError] = useState<string | null>(null);
 
-  const budgetGuard = useMemo(() => {
-    return new BudgetGuard(
+  const budgetGuard = useMemo(() => new BudgetGuard(
       state.totalIncome,
       state.targetSavings,
       state.allocations,
-      isInitialSetup
-    );
-  }, [state.totalIncome, state.targetSavings, state.allocations, isInitialSetup]);
+      isInitialSetup,
+    ), [state.totalIncome, state.targetSavings, state.allocations, isInitialSetup]);
 
   // Update userId when session changes or when provided via props
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
-      setState(prev => ({ ...prev, userId: session.user.id }));
+      setState((prev) => ({ ...prev, userId: session.user.id }));
     }
   }, [session, status]);
 
@@ -102,7 +100,7 @@ export const useBudget = (initialState?: BudgetInitialState) => {
               newState.totalIncome,
               newState.targetSavings,
               newState.allocations,
-              isInitialSetup
+              isInitialSetup,
             );
 
             if (guard.availableFunds < 0) {
@@ -122,7 +120,7 @@ export const useBudget = (initialState?: BudgetInitialState) => {
             const newState = {
               ...currentState,
               targetSavings: newSavings,
-              unallocated: currentState.totalIncome - newSavings - 
+              unallocated: currentState.totalIncome - newSavings -
                 BudgetGuard.getTotalAllocated(currentState.allocations),
             };
 
@@ -144,7 +142,7 @@ export const useBudget = (initialState?: BudgetInitialState) => {
             return {
               ...currentState,
               allocations: newAllocations,
-              unallocated: currentState.totalIncome - currentState.targetSavings - 
+              unallocated: currentState.totalIncome - currentState.targetSavings -
                 BudgetGuard.getTotalAllocated(newAllocations),
             };
           }
@@ -157,13 +155,13 @@ export const useBudget = (initialState?: BudgetInitialState) => {
             }
 
             const newAllocations = currentState.allocations.map((a: BudgetAllocation) =>
-              a.id === action.allocation.id ? action.allocation : a
+              a.id === action.allocation.id ? action.allocation : a,
             );
 
             return {
               ...currentState,
               allocations: newAllocations,
-              unallocated: currentState.totalIncome - currentState.targetSavings - 
+              unallocated: currentState.totalIncome - currentState.targetSavings -
                 BudgetGuard.getTotalAllocated(newAllocations),
             };
           }
@@ -202,7 +200,7 @@ export const useBudget = (initialState?: BudgetInitialState) => {
     availableFunds: budgetGuard.availableFunds,
     isInitialSetup,
     error,
-    isAllocationValid: (allocation: BudgetAllocation) => 
+    isAllocationValid: (allocation: BudgetAllocation) =>
       budgetGuard.validateAllocation(allocation).valid,
   };
 };
