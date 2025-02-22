@@ -74,6 +74,7 @@ export const transactions = pgTable('transaction', {
     .references(() => categories.id, { onDelete: 'cascade' }),
   amount: integer('amount').notNull(),
   date: timestamp('date').notNull(),
+  description: text('description').notNull(),
   aiTags: text('aiTags').array(),
 });
 
