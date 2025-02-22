@@ -1,10 +1,13 @@
-import { pgTable, text, timestamp, integer, primaryKey, pgEnum, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, primaryKey, pgEnum, index, real, boolean } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // Enums
 export const targetFrequencyEnum = pgEnum('target_frequency', ['WEEKLY', 'MONTHLY', 'ANNUAL']);
 export type TargetFrequency = 'WEEKLY' | 'MONTHLY' | 'ANNUAL';
+
+export const transactionTypeEnum = pgEnum('transaction_type', ['debit', 'credit', 'transfer']);
+export const amountThresholdEnum = pgEnum('amount_threshold', ['NORMAL', 'HIGH', 'VERY_HIGH']);
 
 // NextAuth Tables
 export const users = pgTable('users', {
@@ -76,6 +79,23 @@ export const transactions = pgTable('transaction', {
   date: timestamp('date').notNull(),
   description: text('description').notNull(),
   aiTags: text('aiTags').array(),
+  
+  // New fields
+  confidence: real('confidence').notNull().default(0),
+  merchantId: text('merchantId'),
+  recurringId: text('recurringId'),
+  originalDescription: text('originalDescription').notNull(),
+  notes: text('notes'),
+  transactionType: transactionTypeEnum('transactionType').notNull().default('debit'),
+  
+  // Metadata
+  processingTimestamp: timestamp('processingTimestamp').notNull().defaultNow(),
+  schemaVersion: text('schemaVersion').notNull().default('1.0.0'),
+  source: text('source').notNull().default('manual'),
+  
+  // Validation
+  amountThreshold: amountThresholdEnum('amountThreshold').notNull().default('NORMAL'),
+  isWithinLimits: boolean('isWithinLimits').notNull().default(true),
 });
 
 export const aiSettings = pgTable('aiSetting', {

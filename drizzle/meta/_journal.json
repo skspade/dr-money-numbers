@@ -22,6 +22,13 @@
       "when": 1740244921074,
       "tag": "0002_curly_screwball",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1740246283014,
+      "tag": "0003_absurd_toxin",
+      "breakpoints": true
     }
   ]
 }
