@@ -5,6 +5,7 @@ import { categories, transactions } from '@/db/schema';
 import { BudgetAllocation } from '@/lib/types/budget';
 import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { dollarsToCents, centsToDollars } from '@/lib/utils/money';
 
 export async function upsertCategory(
   userId: string,
@@ -16,14 +17,14 @@ export async function upsertCategory(
       id: allocation.id,
       userId,
       name: allocation.category,
-      target: allocation.target?.amount || 0,
+      target: dollarsToCents(allocation.target?.amount || 0),
       frequency: allocation.target?.type === 'monthly' ? 'MONTHLY' : 'WEEKLY',
-      available: allocation.available,
+      available: dollarsToCents(allocation.available),
     }).onConflictDoUpdate({
       target: categories.id,
       set: {
-        target: allocation.target?.amount || 0,
-        available: allocation.available,
+        target: dollarsToCents(allocation.target?.amount || 0),
+        available: dollarsToCents(allocation.available),
       },
     });
 
@@ -46,7 +47,7 @@ export async function updateSpending(
     await db.insert(transactions).values({
       userId,
       categoryId,
-      amount,
+      amount: dollarsToCents(amount),
       date: new Date(),
     });
 
@@ -58,10 +59,11 @@ export async function updateSpending(
       .limit(1);
 
     if (category.length > 0) {
+      const currentAvailable = centsToDollars(category[0].available);
       await db
         .update(categories)
         .set({
-          available: category[0].available - amount,
+          available: dollarsToCents(currentAvailable - amount),
         })
         .where(eq(categories.id, categoryId));
     }
@@ -102,7 +104,14 @@ export async function getTransactions(userId: string, categoryId?: string) {
       .from(transactions)
       .where(and(...conditions));
 
-    return { success: true, data: userTransactions };
+    // Convert amounts from cents to dollars
+    return {
+      success: true,
+      data: userTransactions.map((tx) => ({
+        ...tx,
+        amount: centsToDollars(tx.amount),
+      })),
+    };
   } catch (error) {
     console.error('Failed to fetch transactions:', error);
     return { success: false, error };

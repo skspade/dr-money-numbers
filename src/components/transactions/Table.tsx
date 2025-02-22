@@ -21,10 +21,17 @@ export function TransactionTable() {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await fetch('/api/transactions');
+        const response = await fetch('/api/transactions', {
+          credentials: 'include', // Include credentials for authentication
+        });
+
         if (!response.ok) {
- throw new Error('Failed to fetch transactions');
-}
+          if (response.status === 401) {
+            throw new Error('Please sign in to view transactions');
+          }
+          throw new Error('Failed to fetch transactions');
+        }
+
         const data = await response.json();
         setTransactions(data);
       } catch (err) {
@@ -52,6 +59,14 @@ export function TransactionTable() {
     );
   }
 
+  if (!transactions.length) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        No transactions found
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -59,7 +74,7 @@ export function TransactionTable() {
           <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Description</TableHead>
-            <TableHead>Amount</TableHead>
+            <TableHead className="text-right">Amount</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Tags</TableHead>
           </TableRow>
@@ -69,7 +84,12 @@ export function TransactionTable() {
             <TableRow key={tx.id}>
               <TableCell>{new Date(tx.date).toLocaleDateString()}</TableCell>
               <TableCell>{tx.description}</TableCell>
-              <TableCell>${(tx.amount / 100).toFixed(2)}</TableCell>
+              <TableCell className="text-right">
+                ${(Math.abs(tx.amount) / 100).toFixed(2)}
+                <span className={tx.amount < 0 ? 'text-red-500' : 'text-green-500'}>
+                  {tx.amount < 0 ? ' -' : ' +'}
+                </span>
+              </TableCell>
               <TableCell>{tx.categoryId}</TableCell>
               <TableCell>{tx.aiTags?.join(', ')}</TableCell>
             </TableRow>

@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { saveBudgetAllocation, loadBudgetAllocations, saveBudgetSettings } from '@/app/actions/budget';
 import { Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { formatMoney, parseDollarAmount } from '@/lib/utils/money';
 
 const DEFAULT_CATEGORIES = [
   'Housing',
@@ -89,7 +90,7 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
   };
 
   const handleSavingsChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const newSavings = parseFloat(e.target.value) || 0;
+    const newSavings = parseDollarAmount(e.target.value) ?? 0;
 
     try {
       // Save to database first
@@ -107,8 +108,8 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
   };
 
   const handleAllocationSubmit = async () => {
-    const amount = parseFloat(allocationAmount);
-    if (!selectedCategory || isNaN(amount) || !state.userId) {
+    const amount = parseDollarAmount(allocationAmount) ?? 0;
+    if (!selectedCategory || amount === 0 || !state.userId) {
       setError('Please enter a valid category and amount');
       return;
     }
@@ -322,6 +323,21 @@ export function MonthlyPlanner({ userId }: MonthlyPlannerProps) {
               </div>
             </div>
           )}
+
+          <div>
+            <p>Monthly Income: {formatMoney(state.totalIncome * 100)}</p>
+            <p>Target Savings: {formatMoney(state.targetSavings * 100)}</p>
+            <p>Available for Allocation: {formatMoney(state.totalIncome - state.unallocated * 100)}</p>
+          </div>
+
+          {state.allocations.map((allocation) => (
+            <div key={allocation.id}>
+              <p>{allocation.category}</p>
+              <p>Allocated: {formatMoney(allocation.allocated * 100)}</p>
+              <p>Available: {formatMoney(allocation.available * 100)}</p>
+              <p>Spent: {formatMoney(allocation.spent * 100)}</p>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

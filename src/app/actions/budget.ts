@@ -5,6 +5,7 @@ import { categories, userBudget } from '@/db/schema';
 import { auth } from '@/lib/auth';
 import { BudgetAllocation } from '@/lib/types/budget';
 import { and, eq } from 'drizzle-orm';
+import { dollarsToCents, centsToDollars } from '@/lib/utils/money';
 
 export async function saveBudgetAllocation(allocation: Omit<BudgetAllocation, 'id' | 'userId'>) {
   try {
@@ -15,9 +16,9 @@ export async function saveBudgetAllocation(allocation: Omit<BudgetAllocation, 'i
 
     const db = await getDb();
 
-    // Convert amount to integer (cents)
-    const targetAmount = Math.round(allocation.amount * 100);
-    const availableAmount = Math.round(allocation.available * 100);
+    // Convert amounts to cents
+    const targetAmount = dollarsToCents(allocation.amount);
+    const availableAmount = dollarsToCents(allocation.available);
 
     // First, check if a category with this name already exists for the user
     const existingCategories = await db
@@ -90,17 +91,17 @@ export async function loadBudgetAllocations() {
       .where(eq(categories.userId, session.user.id));
 
     return {
-      totalIncome: budgetSettings?.monthlyIncome ? budgetSettings.monthlyIncome / 100 : 0,
-      targetSavings: budgetSettings?.targetSavings ? budgetSettings.targetSavings / 100 : 0,
+      totalIncome: budgetSettings?.monthlyIncome ? centsToDollars(budgetSettings.monthlyIncome) : 0,
+      targetSavings: budgetSettings?.targetSavings ? centsToDollars(budgetSettings.targetSavings) : 0,
       allocations: userCategories.map((category) => ({
         id: category.id,
         userId: category.userId,
         category: category.name,
-        amount: category.target / 100,
+        amount: centsToDollars(category.target),
         frequency: category.frequency,
-        allocated: category.target / 100,
+        allocated: centsToDollars(category.target),
         spent: 0,
-        available: category.available / 100,
+        available: centsToDollars(category.available),
       })),
     };
   } catch (error) {
@@ -118,9 +119,9 @@ export async function saveBudgetSettings({ monthlyIncome, targetSavings }: { mon
 
     const db = await getDb();
 
-    // Convert to cents
-    const incomeInCents = Math.round(monthlyIncome * 100);
-    const savingsInCents = Math.round(targetSavings * 100);
+    // Convert to cents using our utility
+    const incomeInCents = dollarsToCents(monthlyIncome);
+    const savingsInCents = dollarsToCents(targetSavings);
 
     // Upsert budget settings
     await db
