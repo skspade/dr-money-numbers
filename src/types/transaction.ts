@@ -50,12 +50,12 @@ export const EnhancedTransactionSchema = z.object({
     }),
 
   date: z.string()
-    .refine((date) => {
-      const parsed = new Date(date);
-      return !isNaN(parsed.getTime());
-    }, {
-      message: 'Invalid date format',
-      path: ['date'],
+    .transform((val) => {
+      const parsed = new Date(val);
+      if (isNaN(parsed.getTime())) {
+        throw new TransactionError('Invalid date format', 'INVALID_DATE', 'date');
+      }
+      return parsed;
     }),
 
   category: TransactionCategory,
@@ -71,7 +71,15 @@ export const EnhancedTransactionSchema = z.object({
   transactionType: TransactionType,
 
   // Metadata
-  processingTimestamp: z.date().default(() => new Date()),
+  processingTimestamp: z.string()
+    .transform((val) => {
+      const parsed = new Date(val);
+      if (isNaN(parsed.getTime())) {
+        throw new TransactionError('Invalid processing timestamp', 'INVALID_DATE', 'processingTimestamp');
+      }
+      return parsed;
+    })
+    .default(() => new Date().toISOString()),
   schemaVersion: z.string().default('1.0.0'),
   source: z.string(),
 

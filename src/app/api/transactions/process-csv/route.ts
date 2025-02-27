@@ -67,6 +67,19 @@ function isValidThreshold(value: unknown): value is 'NORMAL' | 'HIGH' | 'VERY_HI
   return typeof value === 'string' && ['NORMAL', 'HIGH', 'VERY_HIGH'].includes(value);
 }
 
+function validateTransactionDate(date: unknown): Date {
+  if (typeof date === 'string') {
+    const d = new Date(date);
+    if (!isNaN(d.getTime())) {
+ return d;
+}
+  }
+  if (date instanceof Date) {
+ return date;
+}
+  throw new Error(`Invalid transaction date: ${JSON.stringify(date)}`);
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -210,14 +223,14 @@ Remember to:
         throw new Error('AI response contains no transactions');
       }
 
-      const rawTransactions = aiResponse.object as RawTransaction[];
+      const rawTransactions = aiResponse.object as unknown as RawTransaction[];
       console.log('AI Response:', JSON.stringify(rawTransactions, null, 2));
 
       const processor = new TransactionProcessor();
       const processedTransactions = rawTransactions.map((transaction) => {
         const input = {
           raw_amount: transaction.amount,
-          raw_date: transaction.date,
+          raw_date: new Date(transaction.date).toISOString(),
           raw_description: transaction.description,
           source: transaction.source,
         };
@@ -286,11 +299,7 @@ Remember to:
           : 'NORMAL';
 
         // Ensure we have a valid date
-        const dateStr = String(tx.date);
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) {
-          throw new Error(`Invalid date: ${dateStr}`);
-        }
+        const date = validateTransactionDate(tx.date);
 
         // Handle optional fields with proper type checking
         const merchantId = typeof tx.merchantId === 'string' ? tx.merchantId : null;
