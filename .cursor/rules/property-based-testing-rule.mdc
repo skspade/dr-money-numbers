@@ -1,0 +1,34 @@
+---
+description: Ensures functions are written to be easily testable with property-based testing
+globs: **/*.js,**/*.ts,**/*.jsx,**/*.tsx
+alwaysApply: false
+---
+# Property-Based Testable Functions Rule
+
+This rule guides Cursor AI to write functions that are optimized for property-based testing. It encourages pure functions with clear contracts, deterministic behavior, and well-defined properties that can be verified through randomized testing.
+
+<rule>
+{
+  "name": "property-based-testable-functions",
+  "description": "Ensures functions are designed to work well with property-based testing frameworks",
+  "filters": [
+    {
+      "type": "event",
+      "pattern": "thinking_about_writing_function"
+    },
+    {
+      "type": "event",
+      "pattern": "writing_function"
+    }
+  ],
+  "actions": [
+    {
+      "type": "suggest",
+      "content": "When writing functions, ensure they are designed for property-based testing by following these principles:\n\n1. **Pure Functions**: Write functions that avoid side effects and always produce the same output for the same input.\n\n2. **Clear Input/Output Contracts**: Define explicit domains and ranges for your functions to support randomized testing.\n\n3. **Invariant Properties**: Consider what properties should always hold true for your function, regardless of input:\n   - Length preservation properties\n   - Idempotence properties (f(f(x)) = f(x))\n   - Commutativity properties (f(x, y) = f(y, x))\n   - Inverse relationships (f(g(x)) = x)\n   - Round-trip properties\n\n4. **Edge Case Handling**: Explicitly handle boundary conditions, empty inputs, and extreme values.\n\n5. **Deterministic Behavior**: Functions should not rely on global state, random values, current time, or other non-deterministic inputs.\n\n6. **Composability**: Build functions that can be easily composed with other functions while maintaining testable properties.\n\n7. **Avoid Long Parameter Lists**: Use object parameters for complex functions to make property tests more manageable.\n\n8. **Documentation**: Document intended properties that should hold true for the function.\n"
+    },
+    {
+      "type": "suggest",
+      "content": "Example property-based tests that could be written for this function:\n\n**For JavaScript (using fast-check):**\n```javascript\nfc.assert(\n  fc.property(fc.array(fc.integer()), (arr) => {\n    const result = yourFunction(arr);\n    // Properties that should hold true\n    return result.length === arr.length; // Example property\n  })\n);\n```\n\n**For Python (using Hypothesis):**\n```python\n@given(st.lists(st.integers()))\ndef test_your_function_properties(input_list):\n    result = your_function(input_list)\n    # Properties that should hold true\n    assert len(result) == len(input_list) # Example property\n```"
+    }
+  ]
+}

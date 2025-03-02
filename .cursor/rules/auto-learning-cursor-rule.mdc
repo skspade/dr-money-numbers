@@ -1,0 +1,45 @@
+---
+description: Instructs Cursor to create or update rules with its learnings after completing tasks
+globs: 
+alwaysApply: true
+---
+
+# Auto-Learning Rule Generator
+
+This rule instructs Cursor AI to automatically create or update rules with its learnings after completing a task. This follows the iterative improvement process recommended in best practices, where Cursor should learn from its experiences and continuously improve its knowledge base.
+
+<rule>
+{
+  "name": "Auto-Learning Rule Generator",
+  "description": "After completing a task, suggest creating or updating a rule to capture the learnings",
+  "filters": [
+    {
+      "type": "event",
+      "attributes": {
+        "event_type": "task_completed"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "type": "suggest",
+      "attributes": {
+        "suggestion": "I've completed this task. Would you like me to create or update a Cursor rule to capture what I've learned? This could help automate similar tasks in the future or prevent common mistakes I encountered.",
+        "explanation": "Creating rules based on completed tasks helps build a comprehensive standard library of reusable prompting rules, improving Cursor's effectiveness over time."
+      }
+    },
+    {
+      "type": "execute",
+      "attributes": {
+        "command": "analyze_task_learnings",
+        "arguments": {
+          "task_id": "${task_id}",
+          "update_existing": true,
+          "create_new_if_needed": true,
+          "rules_directory": ".cursor/rules/"
+        }
+      }
+    }
+  ]
+}
+</rule>

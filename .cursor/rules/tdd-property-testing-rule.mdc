@@ -1,0 +1,62 @@
+---
+description: Guides development using Test-Driven Development (TDD) with pure functions and property-based testing
+globs:
+  - "**/*.js"
+  - "**/*.ts"
+  - "**/*.jsx"
+  - "**/*.tsx"
+  - "**/*.py"
+  - "**/*.rs"
+  - "**/*.go"
+---
+
+# Test-Driven Development with Property-Based Testing Rule
+
+This rule instructs Cursor AI to follow Test-Driven Development (TDD) practices while emphasizing pure functions and property-based testing approaches. It guides the development process through the "Red-Green-Refactor" cycle and ensures functions are designed to be easily testable with property-based testing frameworks.
+
+<rule>
+{
+  "name": "tdd-property-based-testing",
+  "description": "Ensures development follows TDD principles with a focus on pure functions and property-based testing",
+  "filters": [
+    {
+      "type": "event",
+      "pattern": "new_file_requested"
+    },
+    {
+      "type": "event",
+      "pattern": "implementation_requested"
+    },
+    {
+      "type": "event",
+      "pattern": "code_improvement_requested"
+    },
+    {
+      "type": "content",
+      "pattern": "(?i)\\b(implement|create|write|develop)\\b.{0,50}\\b(function|method|class|component)\\b"
+    }
+  ],
+  "actions": [
+    {
+      "type": "suggest",
+      "content": "# Test-Driven Development Process\n\nI'll follow a TDD approach with property-based testing:\n\n## 1. RED: Write Failing Tests First\n- Start with property-based tests that define the expected behaviors and invariants\n- Include both example-based unit tests for specific cases and property-based tests for general behaviors\n- Tests should initially fail since implementation doesn't exist\n\n## 2. GREEN: Implement Minimal Code to Pass\n- Write the simplest implementation that makes tests pass\n- Focus on creating pure functions (deterministic, no side effects)\n- Handle edge cases identified by property-based tests\n\n## 3. REFACTOR: Improve Code Quality\n- Refactor while ensuring tests continue to pass\n- Optimize without changing behavior\n- Maintain function purity and testability"
+    },
+    {
+      "type": "suggest",
+      "content": "# Pure Function Design Principles\n\nWhen writing implementations, I'll follow these principles:\n\n1. **Pure Functions**: Ensure functions are deterministic and free from side effects\n   - Same inputs always produce same outputs\n   - No mutations of external state\n   - No I/O operations within core logic\n\n2. **Separation of Concerns**: Separate pure business logic from side effects\n   - Core algorithms as pure functions\n   - Wrapper functions for I/O and side effects\n\n3. **Clear Contracts**: Define explicit input/output contracts\n   - Document expected types and valid ranges\n   - Handle edge cases gracefully\n\n4. **Small and Focused**: Functions should do one thing well\n   - Easier to test and reason about\n   - More reusable components"
+    },
+    {
+      "type": "suggest",
+      "content": "# Property-Based Testing Guidelines\n\nI'll implement property-based tests that verify these key properties:\n\n1. **Invariant Properties**: Conditions that should always hold true\n   - Length preservation: `len(result) == len(input)`\n   - Order preservation: `sorted(input) == sorted(result)`\n   - Range constraints: `min(input) <= result <= max(input)`\n\n2. **Algebraic Properties**:\n   - Idempotence: `f(f(x)) == f(x)`\n   - Commutativity: `f(a, b) == f(b, a)`\n   - Associativity: `f(a, f(b, c)) == f(f(a, b), c)`\n   - Identity: `f(x, identity) == x`\n   - Inverse relationships: `f(g(x)) == x`\n\n3. **Edge Cases**:\n   - Empty inputs\n   - Boundary values\n   - Extreme values\n   - Special elements (null, NaN, etc.)\n\n4. **Domain-Specific Properties**:\n   - Business rules that must be maintained\n   - Application-specific invariants"
+    },
+    {
+      "type": "execute",
+      "command": "analyze_test_coverage",
+      "args": {
+        "check_property_tests": true,
+        "minimum_coverage": 90
+      }
+    }
+  ]
+}
+</rule>
