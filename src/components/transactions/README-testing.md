@@ -24,6 +24,24 @@ To run tests in UI mode (with a visual interface):
 pnpm test-ct --ui
 ```
 
+## Running Tests in CI Mode
+
+The project includes a special command to run component tests in CI mode:
+
+```bash
+pnpm test-ct:ci
+```
+
+In CI mode:
+
+- Only the Chromium browser is used (not Firefox or WebKit)
+- Interactive tests are skipped
+- The dot reporter is used instead of HTML
+- Fewer workers are used to avoid race conditions
+- Tests get retried on failure
+
+This mode is optimized for continuous integration environments but can also be used locally for faster testing when you only need to verify basic rendering functionality.
+
 ## Test Files
 
 - `EditableCells.ct.tsx`: Tests for the editable cell components used in transaction tables
@@ -51,3 +69,12 @@ When writing new component tests:
 5. Use `expect` assertions to verify behavior
 
 For examples, see the existing test files in this directory.
+
+## CI Compatibility
+
+When writing tests that should work in CI mode:
+
+1. Use `test.skip(!!process.env.CI, 'Skipping in CI mode')` for interactive tests that might be flaky in CI
+2. Keep render tests separate from interaction tests
+3. Avoid multiple component mounts in a single test
+4. Test DOM interactions in non-CI tests, focus on rendering in CI-compatible tests

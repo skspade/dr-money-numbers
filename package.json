@@ -20,7 +20,8 @@
     "db:stop": "brew services stop postgresql@16",
     "db:start": "brew services start postgresql@16",
     "add:shadcn": "pnpm dlx shadcn@latest add",
-    "test-ct": "playwright test -c playwright-ct.config.ts"
+    "test-ct": "playwright test -c playwright-ct.config.ts",
+    "test-ct:ci": "CI=true playwright test -c playwright-ct.config.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.9",
